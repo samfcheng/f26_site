@@ -1,0 +1,214 @@
+import { getContext, setContext } from 'svelte';
+import { moveMs } from './motion.svelte.js';
+import { slides } from './slides/index.js';
+
+const DECK_KEY = Symbol('deck');
+
+
+/**
+ * Shared deck state: which slide is active, which parents are collapsed,
+ * and a registry of card elements so anything can scroll to a slide.
+ *
+ * @param {import('./slides/index.js').Slide[]} slides
+ */
+export function createDeck(slides) {
+	// Parents start collapsed.
+	/** @type {Record<string, boolean>} */
+	const collapsedMap = $state(
+		Object.fromEntries(slides.filter((s) => s.children?.length).map((s) => [s.id, true]))
+	);
+
+	let activeId = $state(slides[0].id);
+
+	/** @type {Map<string, HTMLElement>} */
+	const cards = new Map();
+
+	/** @type {Map<string, any>} */
+	const byId = new Map();
+	/** Flat 1..n numbering in deck order — a sub-slide is just the next slide. */
+	/** @type {Map<string, number>} */
+	const numbers = new Map();
+	let n = 0;
+	for (const slide of slides) {
+		byId.set(slide.id, slide);
+		numbers.set(slide.id, ++n);
+		for (const child of slide.children ?? []) {
+			byId.set(child.id, child);
+			numbers.set(child.id, ++n);
+		}
+	}
+
+	/** @type {HTMLElement | undefined} */
+	let scroller;
+
+	// While a programmatic scroll is in flight the active slide is pinned to its
+	// target, so the sidebar highlight doesn't flicker through everything on the way.
+	let locked = false;
+	/** @type {ReturnType<typeof setTimeout> | undefined} */
+	let unlockTimer;
+
+	function unlock() {
+		locked = false;
+		clearTimeout(unlockTimer);
+		scroller?.removeEventListener('scrollend', unlock);
+	}
+
+	const visible = $derived.by(() => {
+		/** @type {{ slide: any, depth: number }[]} */
+		const flat = [];
+		for (const slide of slides) {
+			flat.push({ slide, depth: 0 });
+			if (slide.children && !collapsedMap[slide.id]) {
+				for (const child of slide.children) flat.push({ slide: child, depth: 1 });
+			}
+		}
+		return flat;
+	});
+
+	const deck = {
+		slides,
+
+		/** @param {string} id */
+		numberOf(id) {
+			return numbers.get(id) ?? 0;
+		},
+
+		get activeId() {
+			return activeId;
+		},
+
+		/** Set from an intersection observer — ignored while a scroll is in flight. */
+		observed(id) {
+			if (!locked) activeId = id;
+		},
+
+		/** Flattened list of slides currently in the scroll flow. */
+		get visible() {
+			return visible;
+		},
+
+		/** @param {string} id */
+		isCollapsed(id) {
+			return collapsedMap[id] === true;
+		},
+
+		/**
+		 * Make a slide selectable: if it is tucked inside a collapsed group, open
+		 * that group first. Used when coming back from a presentation.
+		 * @param {string} id
+		 */
+		reveal(id) {
+			for (const slide of slides) {
+				if (slide.children?.some((/** @type {any} */ child) => child.id === id)) {
+					collapsedMap[slide.id] = false;
+				}
+			}
+			activeId = id;
+		},
+
+		/**
+		 * Clicking a slide selects it; clicking the one that is already selected
+		 * opens or closes its sub-slides.
+		 * @param {string} id
+		 */
+		activate(id) {
+			if (id === activeId && byId.get(id)?.children?.length) deck.toggle(id);
+			else deck.scrollTo(id);
+		},
+
+		/**
+		 * Collapse/expand a parent. The active card is pinned to its current
+		 * position for the whole animation, so nothing jumps under the reader —
+		 * the deck grows or shrinks around them.
+		 * @param {string} id
+		 */
+		toggle(id) {
+			// Collapsing the group the reader is inside: hand the selection back to
+			// the parent, and anchor on it instead of the slide about to disappear.
+			const collapsing = !collapsedMap[id];
+			const swallowsActive =
+				collapsing && byId.get(id)?.children?.some((/** @type {any} */ c) => c.id === activeId);
+
+			const anchor = cards.get(swallowsActive ? id : activeId);
+			const top = anchor?.getBoundingClientRect().top;
+
+			if (swallowsActive) activeId = id;
+			collapsedMap[id] = !collapsedMap[id];
+
+			if (!anchor || top === undefined || !scroller) return;
+
+			locked = true;
+			clearTimeout(unlockTimer);
+			const started = performance.now();
+
+			const hold = () => {
+				const delta = anchor.getBoundingClientRect().top - top;
+				if (delta) scroller.scrollTop += delta;
+				if (performance.now() - started < moveMs() + 80) requestAnimationFrame(hold);
+				else unlock();
+			};
+			requestAnimationFrame(hold);
+		},
+
+		/** @param {HTMLElement} el */
+		setScroller(el) {
+			scroller = el;
+		},
+
+		/**
+		 * @param {string} id
+		 * @param {HTMLElement} el
+		 */
+		register(id, el) {
+			cards.set(id, el);
+			return () => cards.delete(id);
+		},
+
+		/**
+		 * @param {string} id
+		 * @param {ScrollBehavior} [behavior]
+		 */
+		scrollTo(id, behavior = 'smooth') {
+			const el = cards.get(id);
+			if (!el) return false;
+
+			activeId = id;
+			locked = true;
+			clearTimeout(unlockTimer);
+			unlockTimer = setTimeout(unlock, 1200);
+			scroller?.addEventListener('scrollend', unlock, { once: true });
+
+			el.scrollIntoView({ block: 'center', behavior });
+			return true;
+		},
+
+		/**
+		 * Move to the next/previous slide in the visible flow.
+		 * @param {1 | -1} direction
+		 */
+		step(direction) {
+			const list = visible;
+			const index = list.findIndex((entry) => entry.slide.id === activeId);
+			const next = list[Math.min(Math.max(index + direction, 0), list.length - 1)];
+			if (next && next.slide.id !== activeId) deck.scrollTo(next.slide.id);
+		}
+	};
+
+	return deck;
+}
+
+/**
+ * One deck for the whole session. Module state, so leaving for a presentation
+ * and coming back doesn't reset which slides are open or where you were.
+ */
+export const deck = createDeck(slides);
+
+/** @param {ReturnType<typeof createDeck>} deck */
+export function setDeck(deck) {
+	return setContext(DECK_KEY, deck);
+}
+
+/** @returns {ReturnType<typeof createDeck>} */
+export function getDeck() {
+	return getContext(DECK_KEY);
+}

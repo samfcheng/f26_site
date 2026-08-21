@@ -1,0 +1,23 @@
+{
+	"name": "f26-site",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^7.0.1",
+		"@sveltejs/kit": "^2.63.0",
+		"@sveltejs/vite-plugin-svelte": "^7.1.2",
+		"@tabler/icons-svelte": "^3.46.0",
+		"agentation": "^3.0.2",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8",
+		"svelte": "^5.56.1",
+		"vite": "^8.0.16"
+	}
+}
