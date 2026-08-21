@@ -48,15 +48,8 @@
 	// The selection is one block that slides between rows rather than a fill that
 	// pops on and off each row. When the selected row is a collapsed parent the
 	// block grows to wrap its stack, and shrinks back as the group opens.
-	$effect(() => {
+	function measureSelection() {
 		const id = deck.activeId;
-		// Re-measure when rows move, not only when the selection changes.
-		deck.slides.map((s) => deck.isCollapsed(s.id)).join();
-		listWidth;
-		pitch;
-		motion.thumbPeek;
-		motion.maxStack;
-
 		const row = /** @type {HTMLElement | null} */ (list?.querySelector(`[data-item="${id}"]`));
 		if (!row || !list) return;
 
@@ -80,7 +73,33 @@
 		selectionTop = rowBox.top - listBox.top + list.scrollTop;
 		selectionHeight = rowBox.height + stack;
 		selectionReady = true;
-		row.scrollIntoView({ block: 'nearest' });
+	}
+
+	$effect(() => {
+		// Re-measure when rows move, not only when the selection changes.
+		deck.activeId;
+		deck.slides.map((s) => deck.isCollapsed(s.id)).join();
+		listWidth;
+		pitch;
+		motion.thumbPeek;
+		motion.maxStack;
+
+		measureSelection();
+		list?.querySelector(`[data-item="${deck.activeId}"]`)?.scrollIntoView({ block: 'nearest' });
+	});
+
+	// While a group is opening or closing the rows are still moving — and the
+	// list re-centres itself as its content changes height — so the block has to
+	// follow them frame by frame rather than animate to a stale position.
+	$effect(() => {
+		if (!deck.settling) return;
+
+		let frame = requestAnimationFrame(function track() {
+			measureSelection();
+			frame = requestAnimationFrame(track);
+		});
+
+		return () => cancelAnimationFrame(frame);
 	});
 </script>
 
@@ -102,8 +121,9 @@
 				class="selection"
 				style:height="{selectionHeight}px"
 				style:transform="translateY({selectionTop}px)"
-				style:transition="transform {selectMs()}ms {EASE_IN_OUT},
-					height {selectMs()}ms {EASE_IN_OUT}"
+				style:transition={deck.settling
+					? 'none'
+					: `transform ${selectMs()}ms ${EASE_IN_OUT}, height ${selectMs()}ms ${EASE_IN_OUT}`}
 				aria-hidden="true"
 			></div>
 		{/if}

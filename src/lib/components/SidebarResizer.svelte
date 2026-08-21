@@ -1,8 +1,11 @@
 <script>
 	import { chrome, setSidebarWidth, SIDEBAR } from '$lib/layout.svelte.js';
 
-	/** Drag handle on the sidebar's trailing edge. */
-	let dragging = $state(false);
+	/**
+	 * Drag handle on the sidebar's trailing edge. No hover or drag styling — the
+	 * cursor is the affordance, and the sidebar moving is the feedback.
+	 */
+	let dragging = false;
 
 	/** @param {PointerEvent} event */
 	function onpointerdown(event) {
@@ -14,6 +17,14 @@
 	/** @param {PointerEvent} event */
 	function onpointermove(event) {
 		if (!dragging) return;
+
+		// A pointer released outside the window never sends `pointerup`, which
+		// would otherwise leave the handle dragging on plain hover.
+		if (event.buttons === 0) {
+			stop();
+			return;
+		}
+
 		setSidebarWidth(event.clientX);
 	}
 
@@ -37,7 +48,6 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 <div
 	class="resizer"
-	class:dragging
 	role="separator"
 	aria-orientation="vertical"
 	aria-label="Resize slide list"
@@ -49,6 +59,7 @@
 	{onpointermove}
 	onpointerup={stop}
 	onpointercancel={stop}
+	onlostpointercapture={stop}
 	ondblclick={() => setSidebarWidth(SIDEBAR.default)}
 	{onkeydown}
 ></div>
@@ -61,26 +72,5 @@
 		z-index: 5;
 		cursor: col-resize;
 		touch-action: none;
-	}
-
-	/* The visible hairline is the sidebar's border; this only shows while the
-	   handle is actually in use. */
-	.resizer::after {
-		content: '';
-		position: absolute;
-		inset: 0 auto 0 3px;
-		width: 2px;
-		background: var(--fg);
-		opacity: 0;
-		transition: opacity 140ms ease;
-	}
-
-	.resizer.dragging::after,
-	.resizer:focus-visible::after {
-		opacity: 0.5;
-	}
-
-	.resizer:focus-visible {
-		outline: none;
 	}
 </style>

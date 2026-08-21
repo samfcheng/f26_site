@@ -20,6 +20,10 @@ export function createDeck(slides) {
 
 	let activeId = $state(slides[0].id);
 
+	// True while a collapse is animating and the rows are still moving. Anything
+	// positioned against a row has to keep re-measuring until this clears.
+	let settling = $state(false);
+
 	/** @type {Map<string, HTMLElement>} */
 	const cards = new Map();
 
@@ -75,6 +79,10 @@ export function createDeck(slides) {
 
 		get activeId() {
 			return activeId;
+		},
+
+		get settling() {
+			return settling;
 		},
 
 		/** Set from an intersection observer — ignored while a scroll is in flight. */
@@ -135,17 +143,23 @@ export function createDeck(slides) {
 			if (swallowsActive) activeId = id;
 			collapsedMap[id] = !collapsedMap[id];
 
-			if (!anchor || top === undefined || !scroller) return;
-
 			locked = true;
+			settling = true;
 			clearTimeout(unlockTimer);
 			const started = performance.now();
 
 			const hold = () => {
-				const delta = anchor.getBoundingClientRect().top - top;
-				if (delta) scroller.scrollTop += delta;
-				if (performance.now() - started < moveMs() + 80) requestAnimationFrame(hold);
-				else unlock();
+				if (anchor && top !== undefined && scroller) {
+					const delta = anchor.getBoundingClientRect().top - top;
+					if (delta) scroller.scrollTop += delta;
+				}
+
+				if (performance.now() - started < moveMs() + 80) {
+					requestAnimationFrame(hold);
+				} else {
+					settling = false;
+					unlock();
+				}
 			};
 			requestAnimationFrame(hold);
 		},
