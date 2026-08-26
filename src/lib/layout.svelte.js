@@ -1,16 +1,27 @@
 import { MediaQuery } from 'svelte/reactivity';
 
 const narrow = new MediaQuery('(max-width: 860px)', false);
+const midWidth = new MediaQuery('(max-width: 1280px)', false);
 
 /**
- * The slide canvas. Slides are authored at these fixed sizes and scaled to fit,
- * so a slide is laid out once per mode rather than at every viewport width.
- * The canvas is a CSS container named `slide`, so slide components adapt with
- * `@container slide (max-width: 900px)` — which holds in thumbnails too.
+ * The design canvas: the shape of a slide, and the width slides are drawn at.
+ *
+ * In the deck and the show a slide is fluid — it lays out at whatever width it
+ * is given, and only the aspect ratio here applies. A thumbnail can't be fluid
+ * (a 240px row would render a mobile layout at unreadable size), so it lays the
+ * slide out at this width and scales the result down. Pick a width near a real
+ * deck card's and the thumbnail is a faithful miniature.
+ *
+ * Both are also the sizes the slides are designed against, so a slide's own
+ * `px` values are the ones from its mock.
  */
 export const STAGE = {
-	desktop: { width: 1280, height: 720 },
-	mobile: { width: 780, height: 1040 }
+	desktop: { width: 1920, height: 1080 },
+	/* The bridge: 16:9 is a bad shape for a half-width window — the slide gets
+	   short enough that the composition has nowhere to go — so between the two
+	   the deck squares up. */
+	square: { width: 1080, height: 1080 },
+	mobile: { width: 810, height: 1080 }
 };
 
 export function isMobile() {
@@ -18,7 +29,8 @@ export function isMobile() {
 }
 
 export function stage() {
-	return narrow.current ? STAGE.mobile : STAGE.desktop;
+	if (narrow.current) return STAGE.mobile;
+	return midWidth.current ? STAGE.square : STAGE.desktop;
 }
 
 const SIDEBAR_KEY = 'f26:sidebar-width';

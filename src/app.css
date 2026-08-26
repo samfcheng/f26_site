@@ -96,6 +96,11 @@
 	--line: rgb(0 0 0 / 0.1);
 	--line-strong: rgb(0 0 0 / 0.18);
 	--hover: #f0f0f0;
+	/* What a stacked slide washes toward. Deliberately far lighter than mid-grey:
+	   a symmetric wash moves both ends equally, which leaves a black cover barely
+	   separated while it drags a white one visibly grey. Light lifts the dark
+	   slides hard and only grazes the light ones. */
+	--stack-wash: #d6d6d6;
 	--active: #e6e6e6;
 	--selected: #f4f4f4;
 
@@ -169,6 +174,13 @@ button {
 .thumb:focus-visible,
 .card:focus-visible {
 	outline: none;
+}
+
+/* Three slide shapes: 16:9, square, 3:4. Keep in step with `stage()`. */
+@media (max-width: 1280px) {
+	:root {
+		--stage-ratio: 1;
+	}
 }
 
 @media (max-width: 860px) {

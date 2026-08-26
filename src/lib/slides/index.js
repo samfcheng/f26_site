@@ -1,17 +1,15 @@
 import TitleSlide from './TitleSlide.svelte';
-import AboutSlide from './AboutSlide.svelte';
-import WorkSlide from './WorkSlide.svelte';
-import WorkKleinerSlide from './WorkKleinerSlide.svelte';
-import WorkMultiplySlide from './WorkMultiplySlide.svelte';
-import WorkOracleSlide from './WorkOracleSlide.svelte';
-import PlaySlide from './PlaySlide.svelte';
-import PlayTypeSlide from './PlayTypeSlide.svelte';
-import PlayMotionSlide from './PlayMotionSlide.svelte';
-import WritingSlide from './WritingSlide.svelte';
+import MultiplySlide from './MultiplySlide.svelte';
+import MultiplyDetailSlide from './MultiplyDetailSlide.svelte';
+import ClassmateSlide from './ClassmateSlide.svelte';
+import ClassmateDetailSlide from './ClassmateDetailSlide.svelte';
+import OlosSlide from './OlosSlide.svelte';
+import OlosDetailSlide from './OlosDetailSlide.svelte';
 import ContactSlide from './ContactSlide.svelte';
 
 /**
- * The deck. A slide is `{ id, title, component, notes, children? }`.
+ * The deck: a title, three projects — each with a case-study sub-slide — and a
+ * closing slide. A slide is `{ id, title, component, notes, children? }`.
  * Slides with `children` are parents — their sub-slides can be collapsed,
  * which stacks them behind the parent in both the deck and the sidebar.
  *
@@ -19,32 +17,77 @@ import ContactSlide from './ContactSlide.svelte';
  * @type {Slide[]}
  */
 export const slides = [
-	{ id: 'title', title: 'Sam Cheng', component: TitleSlide, notes: 'Open with the name. Keep it short — say hello, then move on.' },
-	{ id: 'about', title: 'About', component: AboutSlide, notes: 'Two sentences on who I am and what I\'m doing at USC right now.' },
 	{
-		id: 'work',
-		title: 'Selected work',
-		component: WorkSlide,
-		notes: 'Frame the work section. Three projects, roughly two minutes each.',
+		id: 'title',
+		title: 'Sam Cheng',
+		component: TitleSlide,
+		notes: 'Open with the name. Say hello, then move on.'
+	},
+	{
+		id: 'multiply',
+		title: 'Multiply',
+		component: MultiplySlide,
+		notes: 'Summer internship. The product, and who it is for.',
 		children: [
-			{ id: 'work-kleiner', title: 'Kleiner Perkins', component: WorkKleinerSlide, notes: 'What the fellowship was, what I shipped, what I learned.' },
-			{ id: 'work-multiply', title: 'Multiply', component: WorkMultiplySlide, notes: 'The design system work and why it mattered to the team.' },
-			{ id: 'work-oracle', title: 'Oracle', component: WorkOracleSlide, notes: 'Scope, constraints, and the one decision I would make differently.' }
+			{
+				id: 'multiply-detail',
+				title: 'Multiply — case study',
+				component: MultiplyDetailSlide,
+				notes: 'The screens, the team, and what the work was aiming at.'
+			}
 		]
 	},
 	{
-		id: 'play',
-		title: 'Play & experiments',
-		component: PlaySlide,
-		notes: 'Lighter section — the things I make when nobody is briefing me.',
+		id: 'classmate',
+		title: 'Classmate',
+		component: ClassmateSlide,
+		notes: 'Founded it. What the problem was and who it is for.',
 		children: [
-			{ id: 'play-type', title: 'Type studies', component: PlayTypeSlide, notes: 'Type experiments. Show the process, not just the outcome.' },
-			{ id: 'play-motion', title: 'Motion studies', component: PlayMotionSlide, notes: 'Motion studies. Talk about timing and easing choices.' }
+			{
+				id: 'classmate-detail',
+				title: 'Classmate — case study',
+				component: ClassmateDetailSlide,
+				notes: 'Brand, product and build. The decision I would make again.'
+			}
 		]
 	},
-	{ id: 'writing', title: 'Notes & writing', component: WritingSlide, notes: 'What I write about and why it feeds the design work.' },
-	{ id: 'contact', title: 'Say hello', component: ContactSlide, notes: 'Close: how to reach me, and an invitation to keep talking.' }
+	{
+		id: 'olos',
+		title: 'Olos',
+		component: OlosSlide,
+		notes: 'Founding designer. Set the brand and the first surface.',
+		children: [
+			{
+				id: 'olos-detail',
+				title: 'Olos — case study',
+				component: OlosDetailSlide,
+				notes: 'How the brand work fed the product work.'
+			}
+		]
+	},
+	{
+		id: 'contact',
+		title: 'Say hello',
+		component: ContactSlide,
+		notes: 'Close: how to reach me, and an invitation to keep talking.'
+	}
 ];
 
 /** Every slide in presentation order — sub-slides included, collapse ignored. */
 export const flatSlides = slides.flatMap((slide) => [slide, ...(slide.children ?? [])]);
+
+// A slide whose component came back `undefined` renders as an opaque
+// "Cannot read properties of undefined (reading 'call')" from deep inside
+// Svelte, with no clue which slide is at fault. Usually it means the dev
+// server's module graph went stale after slides were added or removed, so say
+// so by name rather than letting the show fail silently.
+if (import.meta.env.DEV) {
+	for (const slide of flatSlides) {
+		if (!slide.component) {
+			console.error(
+				`[deck] Slide "${slide.id}" has no component. If you just added, renamed or ` +
+					`removed a slide, restart the dev server (npm run dev) and hard-reload.`
+			);
+		}
+	}
+}

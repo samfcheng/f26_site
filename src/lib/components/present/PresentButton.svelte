@@ -5,9 +5,13 @@
 	import PresentMenuList from './PresentMenuList.svelte';
 
 	/** Starts a show. The button opens the menu; the menu picks the mode. */
-	let { onpresent, floating = true } = $props();
+	let { onpresent, floating = true, hidden = false } = $props();
 
 	let open = $state(false);
+
+	// An open menu stays put: pulling it out from under the pointer mid-choice
+	// is worse than letting it overlap a slide for a moment.
+	const away = $derived(hidden && !open);
 
 	/** @param {boolean} withNotes */
 	function start(withNotes) {
@@ -16,7 +20,7 @@
 	}
 </script>
 
-<div class="anchor" class:floating>
+<div class="anchor" class:floating class:away inert={away}>
 	<button class="play" onclick={() => (open = !open)} aria-haspopup="menu" aria-expanded={open}>
 		<IconPlayerPlay size={13} />
 		<span>Present</span>
@@ -41,6 +45,17 @@
 		top: var(--gap);
 		right: var(--gap);
 		z-index: 20;
+		transition:
+			opacity 160ms ease,
+			transform 200ms var(--ease-out);
+	}
+
+	/* Lifts out of the corner rather than only fading, so it reads as getting
+	   out of the way of the slide coming up. */
+	.anchor.floating.away {
+		opacity: 0;
+		transform: translateY(-8px);
+		pointer-events: none;
 	}
 
 	.play {

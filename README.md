@@ -7,7 +7,13 @@ thumbnail sidebar.
 
 - `src/lib/slides/` — one component per slide, plus `index.js`, the deck manifest.
   A slide is `{ id, title, component, children? }`; slides with `children` are
-  parents whose sub-slides can be collapsed, and start collapsed.
+  parents whose sub-slides can be collapsed, and start collapsed. The deck is a
+  title slide, three projects — Multiply, Classmate, Olos, each with a case-study
+  sub-slide — and a closing slide.
+- `src/lib/slides/work/` — the two layouts the projects share: `WorkCover`
+  (the work dissolving into the slide, with a lockup along the bottom) and
+  `WorkDetail` (a strip of screens running off both edges, the project's name,
+  and the facts). A project slide is a handful of props.
 - `src/lib/deck.svelte.js` — shared deck state (active slide, collapsed parents,
   card registry for scroll-to), passed down via Svelte context.
 - `src/lib/motion.svelte.js` — every timing, curve and stack dimension in one
@@ -22,27 +28,48 @@ thumbnail sidebar.
   - `Deck.svelte` / `DeckCard.svelte` — the scrolling deck. The active slide is
     whichever card crosses the vertical centre of the viewport.
   - `Sidebar.svelte` / `SidebarItem.svelte` — numbered thumbnails.
-  - `Agentation.svelte` — dev-only visual feedback toolbar (see below).
 
-Slide content is deliberately placeholder — pastel backgrounds and dummy text.
+`TitleSlide.svelte` is the headline from samcheng.co: the whole composition is
+sized in `em` off one `font-size`, which is itself in `cqw` — it is a display
+headline, so it fills whatever frame it is given, at any width and in either
+canvas shape. Its chips are interactive — hovering one wipes its colour across the
+words it belongs to, and the orange chip opens a note. It uses `role="button"`
+rather than a real `<button>`, which would be nested inside the sidebar
+thumbnail's button and get broken apart by the HTML parser on hydration.
+
+The closing slide is still a placeholder.
 
 ## Responsive
 
-There is one breakpoint (860px). Above it the deck is 16:9 and the slide list is
-a fixed column; below it the deck is 3:4 and the list becomes an overlay.
+A slide takes one of three shapes. Above 1280px the deck is 16:9; between 860
+and 1280 it squares up, because 16:9 in a half-width window is short enough that
+the composition has nowhere to go; below 860 it is 3:4 and the slide list turns
+from a fixed column into an overlay. `stage()` and `--stage-ratio` have to agree
+about where those lines fall.
 
-Slides are authored at a fixed canvas size — 1280×720 or 780×1040 — and scaled
-to fit, so each slide is laid out once per mode instead of at every width. The
-canvas is a CSS container named `slide`, so a slide adapts with:
+In the deck and the show a slide is **fluid**: it lays itself out at its real
+size inside a box of the right aspect, nothing is transformed, and it responds
+to the space it is given the way a page does. A thumbnail can't be fluid — a
+240px row would render a mobile layout at unreadable size — so it lays the slide
+out at the canvas width in `STAGE` and scales the result down. That width is
+1920, near a real deck card's, which is what keeps a thumbnail a faithful
+miniature.
+
+Either way the box is a CSS container named `slide`, so the same rules drive
+both, and they key off the canvas *shape* rather than a width:
 
 ```css
-@container slide (max-width: 900px) {
-	/* portrait */
-}
+@container slide (aspect-ratio < 1.4) { /* square and narrower */ }
+@container slide (aspect-ratio < 0.9) { /* portrait */ }
 ```
 
-Because that keys off the canvas rather than the viewport, thumbnails show the
-same layout the full slide has.
+A slide's frame has a fixed aspect, so content cannot reflow into extra height
+the way a page can — which means a slide is drawn three times, not scaled three
+times. The work slides carry the three drawings as one number each: `--px`, one
+pixel of the mock — `100cqw / 1920`, `100cqw / 1080`, `100cqw / 420`. Every
+other value is the number straight off the design. Shrinking the grid with the
+frame is what keeps type legible: 15px of a 420-wide mock is a real 15px on a
+420px screen, where 15px of the 1920 mock would land at 3.
 
 `--gap` in `app.css` is the single spacing value: between slides, and from a
 slide to the edge of the deck.
@@ -56,9 +83,29 @@ actually uses are preloaded in `app.html`.
 
 ## Adding a slide
 
-1. Add a component in `src/lib/slides/`.
+1. Add a component in `src/lib/slides/` — a project reuses `work/WorkCover` or
+   `work/WorkDetail`.
 2. Add an entry to the array in `src/lib/slides/index.js` — nest it under a
    parent's `children` to make it a sub-slide.
+
+Project imagery lives in `static/work/<project>/`, as WebP.
+
+## The dissolve
+
+A cover's image doesn't stop, it dissolves — the Figma effect, in two parts over
+one band: a progressive background blur (0 to 48, as six stacked
+`backdrop-filter` layers, each masked in over its own slice so the blur compounds
+rather than steps) and a linear fill of the background colour with stops at 0%,
+90% at 66%, and 100%. The blur is what makes it read as depth instead of a
+curtain; without it the image stays sharp while it dims and the eye keeps trying
+to read it.
+
+The band is measured against the **image**, not the slide, and always ends where
+the image does — `--from` and `--to` in `WorkCover`, which belong to the
+placement rather than to the project. That is what holds up when the slide
+squares up: there a landscape screen is set to the full width and stops well
+short of the bottom, and a dissolve measured against the slide would leave its
+edge showing.
 
 ## Collapsing
 
@@ -72,6 +119,18 @@ of the slides out of the stack rather than a swap between two representations.
 The group's wrapper animates its height at the same time; both use `COLLAPSE_MS`
 and the same easing, and the stack geometry is measured from a real card so it
 can't drift from the CSS.
+
+Each step down a collapsed stack also washes toward `--stack-wash`
+(`motion.recede` sets how far) — a black cover behind a black cover has no edge
+otherwise, and the sliver reads as part of the card in front of it. The wash is
+a light grey rather than mid-grey on purpose: a mid-grey moves both ends of the
+range equally, which leaves a dark slide barely separated while dragging a light
+one visibly grey. At `#d6d6d6` and one 20% step, `#000` lifts to 43 and `#fff`
+only drops to 247.
+
+Not `filter: brightness()`: that multiplies, so it cannot lift `#000` off itself
+at all, and a `filter` there would create a backdrop root and break the covers'
+dissolve.
 
 Only `motion.maxStack` slivers are visible in a collapsed stack; any further
 sub-slides hide exactly behind the last visible one and still travel the whole
@@ -89,7 +148,13 @@ animation, so the deck grows and shrinks around the reader instead of jumping.
 
 ## Presenting
 
-The play button floating over the deck offers two ways to start:
+The play button floats over the top-right of the deck, and steps out of the way
+— up and out, rather than only fading — as the first slide rises to meet it, a
+little before the two would touch. An open menu stays put: pulling it out from
+under the pointer mid-choice is worse than letting it overlap for a moment.
+`Deck.svelte` measures the gap and reports it as `deck.topClear`.
+
+It offers two ways to start:
 
 - **Presentation** (`⌥⌘↵`) — `/present`. The slide is letterboxed in black at
   whatever size fits. Any pointer movement brings back the chrome — the wordmark
@@ -109,6 +174,18 @@ The two windows stay in step over a `BroadcastChannel`; either can drive. Ending
 the show closes the presenter window. Notes live on the slide definitions in
 `src/lib/slides/index.js`.
 
+The join protocol is in `src/lib/present-channel.js`, deliberately apart from
+the reactive state so it can be tested without a browser. One rule holds it
+together: **a window that has just opened asks where the show is — it never
+announces a position of its own.** The presenter window starts at slide 1 like
+any other document, so announcing that on join would drag a running show back to
+the beginning. Only the stage (`connect({ stage: true })`) announces, and only
+it answers `hello`. Once the show is running either window may move it, because
+a `go()` is a deliberate move rather than a stale opinion.
+
+`present-channel.test.js` pins that down — it fails if a joining window starts
+announcing again.
+
 Components are in `src/lib/components/present/` — `PresentButton`,
 `PresentPopover`, `PresentMenuList`, `PresentStage`, `PresentBar` and
 `SlideCounter` — and the state, channel and entry points are in
@@ -118,27 +195,10 @@ Components are in `src/lib/components/present/` — `PresentButton`,
 
 - `↑` `↓` `←` `→` (or PageUp/PageDown) move between slides.
 
-## Agentation
-
-[Agentation](https://agentation.com) is a React component, so it is mounted into
-a React root by `src/lib/components/Agentation.svelte`. It is dynamically
-imported and dev-only, so React never reaches the production bundle.
-
-For annotations to sync to a coding agent, also install the MCP server:
-
-```bash
-npx add-mcp        # any agent — pick agentation-mcp
-# or, Claude Code only:
-npx agentation-mcp init
-npx agentation-mcp doctor
-```
-
-Restart the agent afterwards. Until the server is running on port 4747, the
-toolbar logs one warning and falls back to local storage.
-
 ## Develop
 
 ```bash
 npm run dev
 npm run build && npm run preview
+npm test                 # node --test, no browser needed
 ```

@@ -1,43 +1,42 @@
 import { goto } from '$app/navigation';
 import { deck } from './deck.svelte.js';
+import { join } from './present-channel.js';
 import { flatSlides } from './slides/index.js';
-
-/** Both windows of a presentation talk over this. */
-const CHANNEL = 'f26-present';
 
 /** Where the show currently is. Shared by the stage and the presenter view. */
 export const presentation = $state({ index: 0 });
 
-/** @type {BroadcastChannel | null} */
-let channel = null;
+/** @type {ReturnType<typeof join> | null} */
+let link = null;
 
 /**
  * Join the presentation channel. Returns a teardown for `$effect`.
- * @param {{ onexit?: () => void }} [handlers]
+ *
+ * `stage` marks the window the show is running in — the one that knows where
+ * the show is. Everyone else asks rather than announces; `present-channel.js`
+ * has the reasoning.
+ *
+ * @param {{ onexit?: () => void, stage?: boolean }} [handlers]
  */
-export function connect(handlers = {}) {
+export function connect({ onexit, stage = false } = {}) {
 	if (typeof BroadcastChannel === 'undefined') return () => {};
 
-	channel = new BroadcastChannel(CHANNEL);
-	channel.onmessage = ({ data }) => {
-		if (data?.type === 'index') presentation.index = data.index;
-		else if (data?.type === 'exit') handlers.onexit?.();
-		else if (data?.type === 'sync') post({ type: 'index', index: presentation.index });
-	};
-
-	// Announce where we are, and ask anyone already running where they are.
-	post({ type: 'index', index: presentation.index });
-	post({ type: 'sync' });
+	link = join({
+		stage,
+		index: () => presentation.index,
+		setIndex: (index) => (presentation.index = index),
+		onexit
+	});
 
 	return () => {
-		channel?.close();
-		channel = null;
+		link?.close();
+		link = null;
 	};
 }
 
 /** @param {Record<string, unknown>} message */
 function post(message) {
-	channel?.postMessage(message);
+	link?.post(message);
 }
 
 export function slideAt(index) {

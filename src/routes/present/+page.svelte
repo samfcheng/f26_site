@@ -23,7 +23,49 @@
 	/** @type {ReturnType<typeof setTimeout> | undefined} */
 	let idleTimer;
 
-	$effect(() => connect({ onexit: () => exitPresentation() }));
+	let fullscreen = $state(false);
+	// Set while we are the ones changing fullscreen, so the listener can tell
+	// our own calls apart from the browser's.
+	let ours = false;
+	let leaving = false;
+
+	/** Leave the show. Guarded: exiting drops fullscreen, which lands back here. */
+	function leave() {
+		if (leaving) return;
+		leaving = true;
+		exitPresentation();
+	}
+
+	function toggleFullscreen() {
+		ours = true;
+		if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+		else document.documentElement.requestFullscreen?.().catch(() => {});
+	}
+
+	// Escape inside fullscreen never reaches the page — the browser takes the
+	// keydown for itself and drops fullscreen. So a fullscreen exit we did not
+	// ask for *is* the Escape key, and the show should end rather than quietly
+	// becoming a windowed page at /present.
+	$effect(() => {
+		function sync() {
+			const now = Boolean(document.fullscreenElement);
+			const was = fullscreen;
+			fullscreen = now;
+			if (ours) {
+				ours = false;
+				return;
+			}
+			if (was && !now) leave();
+		}
+
+		sync();
+		document.addEventListener('fullscreenchange', sync);
+		return () => document.removeEventListener('fullscreenchange', sync);
+	});
+
+	// `stage: true` — this is the window the show runs in, so it is the one that
+	// tells the presenter window where the show is.
+	$effect(() => connect({ stage: true, onexit: () => leave() }));
 
 	function onpointermove() {
 		idle = false;
@@ -38,7 +80,7 @@
 
 		if (forward.includes(event.key)) next();
 		else if (back.includes(event.key)) prev();
-		else if (event.key === 'Escape') exitPresentation();
+		else if (event.key === 'Escape') leave();
 		else if (event.key === 'Home') go(0);
 		else if (event.key === 'End') go(total - 1);
 		else return;
@@ -60,7 +102,7 @@
 	<PresentStage {slide} />
 </div>
 
-<PresentBar visible={!idle} onexit={exitPresentation} />
+<PresentBar visible={!idle} onexit={leave} onfullscreen={toggleFullscreen} {fullscreen} />
 
 <div
 	class="dock"

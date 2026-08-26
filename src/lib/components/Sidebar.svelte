@@ -106,7 +106,7 @@
 <aside class="sidebar">
 	<header>
 		<a class="wordmark" href="#slide-{deck.slides[0].id}">
-			SAM <span class="pill">CHENG</span>
+			<img src="/assets/logo_name.svg" alt="Sam Cheng" />
 		</a>
 		<button class="icon-button" onclick={onToggle} aria-label="Hide slide list">
 			<IconMenu2 size={20} stroke={1.75} />
@@ -162,6 +162,7 @@
 							label={deck.numberOf(child.id)}
 							{onnavigate}
 							stacked={collapsed}
+							depth={stack.depth}
 							z={n - j}
 							delay={j * staggerMs()}
 							offset={stack.offset}
@@ -200,21 +201,16 @@
 	.wordmark {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
-		font-size: 15px;
-		font-weight: 700;
-		letter-spacing: 0.01em;
-		color: var(--fg);
-		text-decoration: none;
+		/* Shrinks with the sidebar rather than pushing the toggle out of it. */
+		min-width: 0;
 	}
 
-	.pill {
-		font-size: 11px;
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		padding: 2px 8px 3px;
-		border: 1.5px solid var(--fg);
-		border-radius: 999px;
+	.wordmark img {
+		display: block;
+		height: 14px;
+		max-width: 100%;
+		object-fit: contain;
+		object-position: left center;
 	}
 
 	.list {

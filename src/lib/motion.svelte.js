@@ -31,6 +31,9 @@ export const DEFAULTS = {
 	deckPeek: 5,
 	thumbPeek: 5,
 
+	/** How far each step down a collapsed stack washes toward mid-grey. */
+	recede: 0.2,
+
 	/** Hovering a collapsed slide holds its stack out. */
 	hoverLift: 2,
 	hoverMs: 200

@@ -13,7 +13,7 @@
 
 <div class="letterbox">
 	<div class="frame" class:rounded>
-		<SlideStage canvas={STAGE.desktop}>
+		<SlideStage fluid canvas={STAGE.desktop}>
 			<Slide />
 		</SlideStage>
 	</div>
