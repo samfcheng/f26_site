@@ -167,7 +167,7 @@
 							delay={j * staggerMs()}
 							offset={stack.offset}
 							transform={collapsed ? stack.transform : ''}
-							lift={collapsed && hovered === slide.id ? hoverOffset(stack.depth) : 0}
+							lift={collapsed && hovered === slide.id ? hoverOffset(stack.depth, motion.thumbHoverLift) : 0}
 						/>
 					{/each}
 				</div>

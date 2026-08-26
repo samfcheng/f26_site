@@ -101,6 +101,14 @@
 	   separated while it drags a white one visibly grey. Light lifts the dark
 	   slides hard and only grazes the light ones. */
 	--stack-wash: #d6d6d6;
+	/* The other half of the same job. The wash separates a stacked slide from the
+	   slide above it; this separates a card from whatever is *under* it. A wash
+	   can't do that — a white slide washed toward light grey lands on #f7f7f7,
+	   three levels off the #fafafa page, so it vanishes. A cast shadow is drawn
+	   outside the card, so it reads at any slide colour. Every deck card carries
+	   it, stacked or not, so a slide and the slivers under it are lit alike. */
+	--card-shadow: 0 2px 6px -1px rgb(0 0 0 / 0.06);
+	--card-shadow-sm: 0 1px 3px -1px rgb(0 0 0 / 0.16);
 	--active: #e6e6e6;
 	--selected: #f4f4f4;
 

@@ -121,12 +121,21 @@
 		transform-origin: 50% 0;
 	}
 
+	/* Ring and cast shadow, on every card. A stacked card used to drop the ring —
+	   the worry was that an outline round a card showing only a sliver draws a
+	   hairline across the bottom of that sliver. In practice the opposite reads
+	   worse: the slide's border appears to stop where the sliver starts. So the
+	   sliver keeps its edge, and because the treatment is identical stacked or
+	   not, the stack looks like the same card repeated rather than a different
+	   thing behind it. */
 	.card {
 		position: relative;
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 		background: #fff;
-		box-shadow: 0 0 0 1px var(--line);
+		box-shadow:
+			0 0 0 1px var(--line),
+			var(--card-shadow);
 	}
 
 	.recede {
@@ -138,12 +147,6 @@
 
 	.card.parent {
 		cursor: pointer;
-	}
-
-	/* See the note in SidebarItem — an outline round a card showing only a
-	   sliver draws a hairline where the sliver's own edge should be. */
-	.card.stacked {
-		box-shadow: none;
 	}
 
 

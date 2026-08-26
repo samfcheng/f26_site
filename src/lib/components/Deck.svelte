@@ -156,7 +156,7 @@
 							z={n - i}
 							delay={i * staggerMs()}
 							transform={collapsed ? stack.transform : ''}
-							lift={collapsed && hovered === slide.id ? hoverOffset(stack.depth) : 0}
+							lift={collapsed && hovered === slide.id ? hoverOffset(stack.depth, motion.deckHoverLift) : 0}
 						/>
 					{/each}
 				</div>

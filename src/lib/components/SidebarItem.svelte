@@ -61,7 +61,8 @@
 			class="thumb"
 			class:stacked
 			style:transform={lift ? `translateY(${lift}px)` : null}
-			style:transition="transform {hoverMs()}ms {EASE_OUT}"
+			style:transition="transform {hoverMs()}ms {EASE_OUT},
+				box-shadow {moveMs()}ms {EASE_OUT} {delay}ms"
 			onclick={() => {
 				deck.activate(slide.id);
 				onnavigate();
@@ -138,12 +139,14 @@
 		pointer-events: none;
 	}
 
-	/* Only a sliver of a stacked thumbnail shows, and an outline drawn round the
-	   whole card leaves a hairline across the bottom of that sliver — the
-	   darkest thing under a light slide, which is not what should read there.
-	   The sliver's own edge against the pane is enough. */
+	/* The ring stays, so the thumbnail's border doesn't appear to stop where the
+	   sliver starts, plus a cast shadow so the sliver survives a light thumbnail
+	   on a light pane. See the note in DeckCard. Unstacked thumbnails are ring
+	   only — a shadow on every row is heavy in a pane this narrow. */
 	.thumb.stacked {
-		box-shadow: none;
+		box-shadow:
+			0 0 0 1px var(--line),
+			var(--card-shadow-sm);
 	}
 
 	.recede {

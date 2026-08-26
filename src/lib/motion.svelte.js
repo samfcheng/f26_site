@@ -27,15 +27,19 @@ export const DEFAULTS = {
 	/** How many sub-slides are visible in a collapsed stack. */
 	maxStack: 2,
 	/** Sliver of each stacked slide. Also its horizontal inset, so a stacked
-	    slide steps in by exactly as much as it steps down. */
-	deckPeek: 5,
+	    slide steps in by exactly as much as it steps down. Two knobs because
+	    these are pixels, not ratios: 5px under a 200px thumbnail is a visible
+	    step, and the same 5px under a 1000px card is a rounding error. */
+	deckPeek: 12,
 	thumbPeek: 5,
 
 	/** How far each step down a collapsed stack washes toward mid-grey. */
 	recede: 0.2,
 
-	/** Hovering a collapsed slide holds its stack out. */
-	hoverLift: 2,
+	/** Hovering a collapsed slide holds its stack out. Split by pane for the same
+	    reason as the peek — these are pixels, not ratios. */
+	deckHoverLift: 5,
+	thumbHoverLift: 2,
 	hoverMs: 200
 };
 
@@ -67,10 +71,11 @@ export function hoverMs() {
  * How far a stacked slide steps out while its parent is hovered. Zero on
  * touch, where every tap would fire a phantom hover.
  * @param {number} depth  clamped position in the stack
+ * @param {number} lift   px per step — `deckHoverLift` or `thumbHoverLift`
  */
-export function hoverOffset(depth) {
+export function hoverOffset(depth, lift) {
 	if (!hoverable.current || reduce.current) return 0;
-	return motion.hoverLift * (depth + 1);
+	return lift * (depth + 1);
 }
 
 /**
