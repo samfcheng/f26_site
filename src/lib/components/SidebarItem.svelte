@@ -59,6 +59,7 @@
 	>
 		<button
 			class="thumb"
+			class:stacked
 			style:transform={lift ? `translateY(${lift}px)` : null}
 			style:transition="transform {hoverMs()}ms {EASE_OUT}"
 			onclick={() => {
@@ -135,6 +136,14 @@
 
 	.thumb :global(*) {
 		pointer-events: none;
+	}
+
+	/* Only a sliver of a stacked thumbnail shows, and an outline drawn round the
+	   whole card leaves a hairline across the bottom of that sliver — the
+	   darkest thing under a light slide, which is not what should read there.
+	   The sliver's own edge against the pane is enough. */
+	.thumb.stacked {
+		box-shadow: none;
 	}
 
 	.recede {

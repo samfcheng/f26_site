@@ -55,7 +55,7 @@
 	<div class="block">
 		<p class="lead">More coming soon. For now, let’s connect:</p>
 
-		<p class="row">
+		<p class="line">
 			{#each socials as social (social.label)}
 				<span
 					class="chip"
@@ -71,7 +71,7 @@
 			<span class="handle">/samfcheng</span>
 		</p>
 
-		<p class="row">
+		<p class="line">
 			<span
 				class="chip"
 				role="link"
@@ -116,7 +116,7 @@
 		text-align: center;
 	}
 
-	.row {
+	.line {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
@@ -180,7 +180,7 @@
 			font-size: calc(20 * var(--px));
 		}
 
-		.row {
+		.line {
 			gap: calc(8 * var(--px));
 			font-size: calc(17 * var(--px));
 		}

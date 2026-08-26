@@ -81,6 +81,7 @@
 	<article
 		class="card"
 		class:parent={isParent}
+		class:stacked
 		id="slide-{slide.id}"
 		style:transform={lift ? `translateY(${lift}px)` : null}
 		style:transition="transform {hoverMs()}ms {EASE_OUT}"
@@ -137,6 +138,12 @@
 
 	.card.parent {
 		cursor: pointer;
+	}
+
+	/* See the note in SidebarItem — an outline round a card showing only a
+	   sliver draws a hairline where the sliver's own edge should be. */
+	.card.stacked {
+		box-shadow: none;
 	}
 
 
