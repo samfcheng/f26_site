@@ -1,144 +1,85 @@
 # f26_site
 
-Personal portfolio built as a slideshow editor: a scrolling deck of slides with a
-thumbnail sidebar.
+Sam Cheng's portfolio, built as a slideshow editor: a scrolling deck of slides
+with a thumbnail sidebar, and a presentation mode with speaker notes.
 
-## Structure
+The conceit is that the portfolio *is* the deck. There is no separate "site" and
+"slides" — the same components render as the scrolling page, as the sidebar
+thumbnails, and as the full-screen show.
 
-- `src/lib/slides/` — one component per slide, plus `index.js`, the deck manifest.
-  A slide is `{ id, title, component, children? }`; slides with `children` are
-  parents whose sub-slides can be collapsed, and start collapsed.
-- `src/lib/deck.svelte.js` — shared deck state (active slide, collapsed parents,
-  card registry for scroll-to), passed down via Svelte context.
-- `src/lib/motion.svelte.js` — every timing, curve and stack dimension in one
-  place, plus `stackTransform`.
-- `src/lib/layout.svelte.js` — the breakpoint, the two canvas sizes, and the
-  sidebar width (dragged from its trailing edge, remembered in `localStorage`).
-- `src/lib/present.svelte.js` — presentation state and cross-window sync.
-- `src/lib/components/`
-  - `SlideStage.svelte` — renders slide content on a fixed canvas and scales it
-    to its container, so the same component is both the full slide and its
-    sidebar thumbnail.
-  - `Deck.svelte` / `DeckCard.svelte` — the scrolling deck. The active slide is
-    whichever card crosses the vertical centre of the viewport.
-  - `Sidebar.svelte` / `SidebarItem.svelte` — numbered thumbnails.
-  - `Agentation.svelte` — dev-only visual feedback toolbar (see below).
-
-Slide content is deliberately placeholder — pastel backgrounds and dummy text.
-
-## Responsive
-
-There is one breakpoint (860px). Above it the deck is 16:9 and the slide list is
-a fixed column; below it the deck is 3:4 and the list becomes an overlay.
-
-Slides are authored at a fixed canvas size — 1280×720 or 780×1040 — and scaled
-to fit, so each slide is laid out once per mode instead of at every width. The
-canvas is a CSS container named `slide`, so a slide adapts with:
-
-```css
-@container slide (max-width: 900px) {
-	/* portrait */
-}
+```bash
+npm install
+npm run dev
 ```
 
-Because that keys off the canvas rather than the viewport, thumbnails show the
-same layout the full slide has.
+## Where things are
 
-`--gap` in `app.css` is the single spacing value: between slides, and from a
-slide to the edge of the deck.
+```
+src/lib/slides/          one component per slide + index.js, the deck manifest
+src/lib/slides/work/     WorkCover / WorkDetail — the two shared project layouts
+src/lib/components/      SlideStage, Deck, Sidebar, and present/
+src/lib/deck.svelte.js   deck state: active slide, collapsed groups, card registry
+src/lib/motion.svelte.js every timing, curve and stack dimension
+src/lib/layout.svelte.js breakpoints, canvas sizes, sidebar width
+src/lib/present.svelte.js presentation state and cross-window sync
+static/work/<project>/   project imagery, WebP
+docs/                    the long-form documentation
+```
+
+## Docs
+
+| | |
+| --- | --- |
+| [docs/architecture.md](docs/architecture.md) | How a slide gets on screen: the two rendering modes, the three shapes, `--px`, deck state, collapsing |
+| [docs/slides.md](docs/slides.md) | The manifest, `WorkCover` / `WorkDetail`, the dissolve, imagery, adding a slide |
+| [docs/presenting.md](docs/presenting.md) | The show, the two-window protocol, the fullscreen/Escape problem |
+| [docs/decisions.md](docs/decisions.md) | **Why the odd bits are odd.** Read before "simplifying" anything |
+| [docs/open-questions.md](docs/open-questions.md) | What is unfinished, unverified, or waiting on a call |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Conventions, and how to verify visual work properly |
+
+## The shape of it in one page
+
+**One component, three renderings.** `SlideStage` draws a slide either *fluid*
+(the deck and the show — real layout at real size) or *scaled* (thumbnails — laid
+out on a fixed canvas and shrunk, so a 240px row is a faithful miniature rather
+than a phone layout at unreadable size).
+
+**Three shapes, three drawings.** 16:9 above 1280px, square between 860 and
+1280, 3:4 below. A slide's frame has a fixed aspect, so content cannot reflow
+into extra height the way a page can — each shape is drawn separately, and each
+carries one number, `--px`, the size of one pixel of that shape's mock. Every
+other value in a slide is the number straight off the design.
+
+**The deck is the sidebar is the show.** Collapsing a group, selecting a slide
+and scrolling all run through `deck.svelte.js`, so both panes agree without
+knowing about each other.
+
+**The covers are matched to their mocks numerically**, not by eye — to a mean
+row-luminance difference of 1.09–2.47 across the dissolve. If you change one,
+re-diff it. [CONTRIBUTING.md](CONTRIBUTING.md#verifying-visual-work) explains how.
 
 ## Type
 
 PP Neue Montreal, self-hosted from `static/fonts` and declared in `app.css`.
 `Book` sits between Light and Regular in this family, so it is mapped to 350 —
-the rest are the usual 100/300/400/500/600/700. The three weights the UI
-actually uses are preloaded in `app.html`.
-
-## Adding a slide
-
-1. Add a component in `src/lib/slides/`.
-2. Add an entry to the array in `src/lib/slides/index.js` — nest it under a
-   parent's `children` to make it a sub-slide.
-
-## Collapsing
-
-Click a slide to select it; click the selected one again to open or close its
-sub-slides. This works the same in the sidebar and in the deck.
-
-A collapsed sub-slide is not a different element from an expanded one — it is
-the same card with a `transform` that tucks it behind its parent
-(`stackTransform` in `deck.svelte.js`), so expanding is one continuous movement
-of the slides out of the stack rather than a swap between two representations.
-The group's wrapper animates its height at the same time; both use `COLLAPSE_MS`
-and the same easing, and the stack geometry is measured from a real card so it
-can't drift from the CSS.
-
-Only `motion.maxStack` slivers are visible in a collapsed stack; any further
-sub-slides hide exactly behind the last visible one and still travel the whole
-distance when the group opens. A stacked slide's scale is derived from its peek,
-so it steps in by exactly as many pixels as it steps down, in both panes.
-Hovering a collapsed slide pulses its stack out and back to advertise that
-clicking will expand it — desktop pointers only.
-
-Slides are numbered 1..n straight through, sub-slides included, and those
-numbers are stable: collapsing a group leaves a gap in the visible sequence
-rather than renumbering the slides after it.
-
-Collapsing or expanding also pins the active card in place for the length of the
-animation, so the deck grows and shrinks around the reader instead of jumping.
-
-## Presenting
-
-The play button floating over the deck offers two ways to start:
-
-- **Presentation** (`⌥⌘↵`) — `/present`. The slide is letterboxed in black at
-  whatever size fits. Any pointer movement brings back the chrome — the wordmark
-  and a way out at the top, the slide counter at the bottom — and it leaves
-  again, with the cursor, once the pointer settles. Click or arrow to advance,
-  `Esc` to leave: you come back to the editor on the slide you finished on, with
-  its group opened if it was collapsed.
-- **Presentation with notes** (`⌥⇧⌘↵`) — the same show, plus a separate window
-  (`popup=yes`, not a tab) at `/present/notes` with the deck on the left and
-  speaker notes on the right.
-
-The show's chrome is the same floating white surface as the rest of the app
-rather than a dark scrim, so it stays legible over a black bar and a white slide
-alike: one round chip at the top centre to leave, and the counter at the bottom.
-
-The two windows stay in step over a `BroadcastChannel`; either can drive. Ending
-the show closes the presenter window. Notes live on the slide definitions in
-`src/lib/slides/index.js`.
-
-Components are in `src/lib/components/present/` — `PresentButton`,
-`PresentPopover`, `PresentMenuList`, `PresentStage`, `PresentBar` and
-`SlideCounter` — and the state, channel and entry points are in
-`src/lib/present.svelte.js`.
+the rest are the usual 100/300/400/500/600/700. Only 400 and 500 are used by any
+component, and those two are preloaded in `app.html`. If you start using another
+weight, preload it; if you stop using one, drop the preload — a preloaded font
+nothing uses is fetched at high priority on every page load for nothing.
 
 ## Keyboard
 
-- `↑` `↓` `←` `→` (or PageUp/PageDown) move between slides.
+| | |
+| --- | --- |
+| `↑` `↓` `←` `→`, PageUp/PageDown | move between slides |
+| `⌥⌘↵` | present |
+| `⌥⇧⌘↵` | present with notes |
+| `Esc` | leave the show |
 
-## Agentation
-
-[Agentation](https://agentation.com) is a React component, so it is mounted into
-a React root by `src/lib/components/Agentation.svelte`. It is dynamically
-imported and dev-only, so React never reaches the production bundle.
-
-For annotations to sync to a coding agent, also install the MCP server:
-
-```bash
-npx add-mcp        # any agent — pick agentation-mcp
-# or, Claude Code only:
-npx agentation-mcp init
-npx agentation-mcp doctor
-```
-
-Restart the agent afterwards. Until the server is running on port 4747, the
-toolbar logs one warning and falls back to local storage.
-
-## Develop
+## Scripts
 
 ```bash
 npm run dev
 npm run build && npm run preview
+npm test                 # node --test, no browser needed
 ```

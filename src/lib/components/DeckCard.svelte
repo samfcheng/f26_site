@@ -1,7 +1,7 @@
 <script>
 	import SlideStage from './SlideStage.svelte';
 	import { getDeck } from '$lib/deck.svelte.js';
-	import { EASE_OUT, hoverMs, moveMs } from '$lib/motion.svelte.js';
+	import { EASE_OUT, hoverMs, motion, moveMs } from '$lib/motion.svelte.js';
 
 	/**
 	 * One slide in the scrolling deck. A sub-slide is the same element whether
@@ -16,10 +16,20 @@
 		transform = '',
 		lift = 0,
 		stacked = false,
+		depth = 0,
 		z = 1,
 		delay = 0,
 		onhover = () => {}
 	} = $props();
+
+	// Only a sliver of a stacked slide shows, and against a slide of its own
+	// colour that sliver has no edge — a black cover behind a black cover reads
+	// as one card. Each step down washes toward `--stack-wash`, which lightens a
+	// dark slide and darkens a light one, so the steps separate whichever way
+	// the slide goes. Deliberately not `filter: brightness()`: that multiplies,
+	// so it cannot lift #000 off itself at all, and a `filter` here would make a
+	// backdrop root and break the covers' dissolve.
+	const wash = $derived(stacked ? motion.recede * (depth + 1) : 0);
 
 
 	const deck = getDeck();
@@ -71,6 +81,7 @@
 	<article
 		class="card"
 		class:parent={isParent}
+		class:stacked
 		id="slide-{slide.id}"
 		style:transform={lift ? `translateY(${lift}px)` : null}
 		style:transition="transform {hoverMs()}ms {EASE_OUT}"
@@ -83,9 +94,16 @@
 		onmouseleave={isParent ? () => onhover(false) : undefined}
 		{onkeydown}
 	>
-		<SlideStage>
+		<SlideStage fluid>
 			<Slide />
 		</SlideStage>
+
+		<div
+			class="recede"
+			style:opacity={wash}
+			style:transition="opacity {moveMs()}ms {EASE_OUT} {delay}ms"
+			aria-hidden="true"
+		></div>
 	</article>
 </div>
 
@@ -103,11 +121,28 @@
 		transform-origin: 50% 0;
 	}
 
+	/* Ring and cast shadow, on every card. A stacked card used to drop the ring —
+	   the worry was that an outline round a card showing only a sliver draws a
+	   hairline across the bottom of that sliver. In practice the opposite reads
+	   worse: the slide's border appears to stop where the sliver starts. So the
+	   sliver keeps its edge, and because the treatment is identical stacked or
+	   not, the stack looks like the same card repeated rather than a different
+	   thing behind it. */
 	.card {
+		position: relative;
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 		background: #fff;
-		box-shadow: 0 0 0 1px var(--line);
+		box-shadow:
+			0 0 0 1px var(--line),
+			var(--card-shadow);
+	}
+
+	.recede {
+		position: absolute;
+		inset: 0;
+		background: var(--stack-wash);
+		pointer-events: none;
 	}
 
 	.card.parent {

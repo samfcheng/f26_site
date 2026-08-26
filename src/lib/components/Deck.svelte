@@ -26,6 +26,36 @@
 	/** Id of the collapsed group currently under the pointer. */
 	let hovered = $state('');
 
+	// The Present button floats over the top-right of the deck at `--gap`. Once
+	// the first slide climbs into that corner the button is sitting on a slide,
+	// so it leaves — a little early, hence the extra clearance, rather than at
+	// the moment the two touch.
+	const CHROME_HEIGHT = 32;
+	const CLEARANCE = 20;
+
+	// Read once per reflow rather than per scroll event: `getComputedStyle` in a
+	// scroll handler is a style resolution on every frame the deck moves.
+	let threshold = CHROME_HEIGHT + CLEARANCE;
+
+	function checkTop() {
+		const first = track?.querySelector('.slot');
+		if (!first || !scroller) return;
+		const top = first.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+		deck.setTopClear(top > threshold);
+	}
+
+	$effect(() => {
+		// Re-check when the deck reflows, not only when it scrolls.
+		trackWidth;
+		pitch;
+		deck.visible;
+		if (track) {
+			threshold =
+				(parseFloat(getComputedStyle(track).paddingInlineStart) || 0) + CHROME_HEIGHT + CLEARANCE;
+		}
+		checkTop();
+	});
+
 	// Measured rather than derived from the aspect ratio, so the stack geometry
 	// can't drift from whatever the CSS actually produces.
 	$effect(() => {
@@ -85,7 +115,12 @@
 
 <svelte:window {onkeydown} />
 
-<main class="deck" bind:this={scroller} style="--pad: max(4vh, calc(50dvh - {pad}px))">
+<main
+	class="deck"
+	bind:this={scroller}
+	onscroll={checkTop}
+	style="--pad: max(4vh, calc(50dvh - {pad}px))"
+>
 	<div class="track" bind:this={track} bind:clientWidth={trackWidth}>
 		{#each deck.slides as slide (slide.id)}
 			<DeckCard
@@ -117,10 +152,11 @@
 						<DeckCard
 							slide={child}
 							stacked={collapsed}
+							depth={stack.depth}
 							z={n - i}
 							delay={i * staggerMs()}
 							transform={collapsed ? stack.transform : ''}
-							lift={collapsed && hovered === slide.id ? hoverOffset(stack.depth) : 0}
+							lift={collapsed && hovered === slide.id ? hoverOffset(stack.depth, motion.deckHoverLift) : 0}
 						/>
 					{/each}
 				</div>

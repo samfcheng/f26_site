@@ -73,7 +73,7 @@
 
 	<div class="deck-area">
 		<Deck />
-		<PresentButton onpresent={start} />
+		<PresentButton onpresent={start} hidden={!deck.topClear} />
 	</div>
 </div>
 

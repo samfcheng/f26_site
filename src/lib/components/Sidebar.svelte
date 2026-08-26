@@ -48,15 +48,8 @@
 	// The selection is one block that slides between rows rather than a fill that
 	// pops on and off each row. When the selected row is a collapsed parent the
 	// block grows to wrap its stack, and shrinks back as the group opens.
-	$effect(() => {
+	function measureSelection() {
 		const id = deck.activeId;
-		// Re-measure when rows move, not only when the selection changes.
-		deck.slides.map((s) => deck.isCollapsed(s.id)).join();
-		listWidth;
-		pitch;
-		motion.thumbPeek;
-		motion.maxStack;
-
 		const row = /** @type {HTMLElement | null} */ (list?.querySelector(`[data-item="${id}"]`));
 		if (!row || !list) return;
 
@@ -80,14 +73,40 @@
 		selectionTop = rowBox.top - listBox.top + list.scrollTop;
 		selectionHeight = rowBox.height + stack;
 		selectionReady = true;
-		row.scrollIntoView({ block: 'nearest' });
+	}
+
+	$effect(() => {
+		// Re-measure when rows move, not only when the selection changes.
+		deck.activeId;
+		deck.slides.map((s) => deck.isCollapsed(s.id)).join();
+		listWidth;
+		pitch;
+		motion.thumbPeek;
+		motion.maxStack;
+
+		measureSelection();
+		list?.querySelector(`[data-item="${deck.activeId}"]`)?.scrollIntoView({ block: 'nearest' });
+	});
+
+	// While a group is opening or closing the rows are still moving — and the
+	// list re-centres itself as its content changes height — so the block has to
+	// follow them frame by frame rather than animate to a stale position.
+	$effect(() => {
+		if (!deck.settling) return;
+
+		let frame = requestAnimationFrame(function track() {
+			measureSelection();
+			frame = requestAnimationFrame(track);
+		});
+
+		return () => cancelAnimationFrame(frame);
 	});
 </script>
 
 <aside class="sidebar">
 	<header>
 		<a class="wordmark" href="#slide-{deck.slides[0].id}">
-			SAM <span class="pill">CHENG</span>
+			<img src="/assets/logo_name.svg" alt="Sam Cheng" />
 		</a>
 		<button class="icon-button" onclick={onToggle} aria-label="Hide slide list">
 			<IconMenu2 size={20} stroke={1.75} />
@@ -102,8 +121,9 @@
 				class="selection"
 				style:height="{selectionHeight}px"
 				style:transform="translateY({selectionTop}px)"
-				style:transition="transform {selectMs()}ms {EASE_IN_OUT},
-					height {selectMs()}ms {EASE_IN_OUT}"
+				style:transition={deck.settling
+					? 'none'
+					: `transform ${selectMs()}ms ${EASE_IN_OUT}, height ${selectMs()}ms ${EASE_IN_OUT}`}
 				aria-hidden="true"
 			></div>
 		{/if}
@@ -142,11 +162,12 @@
 							label={deck.numberOf(child.id)}
 							{onnavigate}
 							stacked={collapsed}
+							depth={stack.depth}
 							z={n - j}
 							delay={j * staggerMs()}
 							offset={stack.offset}
 							transform={collapsed ? stack.transform : ''}
-							lift={collapsed && hovered === slide.id ? hoverOffset(stack.depth) : 0}
+							lift={collapsed && hovered === slide.id ? hoverOffset(stack.depth, motion.thumbHoverLift) : 0}
 						/>
 					{/each}
 				</div>
@@ -180,21 +201,16 @@
 	.wordmark {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
-		font-size: 15px;
-		font-weight: 700;
-		letter-spacing: 0.01em;
-		color: var(--fg);
-		text-decoration: none;
+		/* Shrinks with the sidebar rather than pushing the toggle out of it. */
+		min-width: 0;
 	}
 
-	.pill {
-		font-size: 11px;
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		padding: 2px 8px 3px;
-		border: 1.5px solid var(--fg);
-		border-radius: 999px;
+	.wordmark img {
+		display: block;
+		height: 14px;
+		max-width: 100%;
+		object-fit: contain;
+		object-position: left center;
 	}
 
 	.list {

@@ -20,6 +20,15 @@ export function createDeck(slides) {
 
 	let activeId = $state(slides[0].id);
 
+	// True while a collapse is animating and the rows are still moving. Anything
+	// positioned against a row has to keep re-measuring until this clears.
+	let settling = $state(false);
+
+	// Whether the top of the deck is still clear of the floating chrome. The
+	// Present button sits over the deck, so it gets out of the way as the first
+	// slide comes up to meet it. Reported by the deck, which owns the scroller.
+	let topClear = $state(true);
+
 	/** @type {Map<string, HTMLElement>} */
 	const cards = new Map();
 
@@ -40,6 +49,14 @@ export function createDeck(slides) {
 
 	/** @type {HTMLElement | undefined} */
 	let scroller;
+
+	// Toggling again before the last collapse has finished starts a second hold
+	// loop. Both would pin their own anchor and fight over `scrollTop`, and the
+	// first to reach its deadline would clear `settling` while the rows are
+	// still moving — which strands anything positioned against a row, like the
+	// sidebar's selection block, wherever it happened to be. Each loop carries
+	// the token it started with and gives way to any later one.
+	let holdToken = 0;
 
 	// While a programmatic scroll is in flight the active slide is pinned to its
 	// target, so the sidebar highlight doesn't flicker through everything on the way.
@@ -75,6 +92,20 @@ export function createDeck(slides) {
 
 		get activeId() {
 			return activeId;
+		},
+
+		get settling() {
+			return settling;
+		},
+
+		/** False once the first slide has reached the floating chrome. */
+		get topClear() {
+			return topClear;
+		},
+
+		/** @param {boolean} clear */
+		setTopClear(clear) {
+			topClear = clear;
 		},
 
 		/** Set from an intersection observer — ignored while a scroll is in flight. */
@@ -135,17 +166,28 @@ export function createDeck(slides) {
 			if (swallowsActive) activeId = id;
 			collapsedMap[id] = !collapsedMap[id];
 
-			if (!anchor || top === undefined || !scroller) return;
-
 			locked = true;
+			settling = true;
 			clearTimeout(unlockTimer);
 			const started = performance.now();
+			const token = ++holdToken;
 
 			const hold = () => {
-				const delta = anchor.getBoundingClientRect().top - top;
-				if (delta) scroller.scrollTop += delta;
-				if (performance.now() - started < moveMs() + 80) requestAnimationFrame(hold);
-				else unlock();
+				// A later toggle has taken over: leave `settling` alone — that run
+				// owns it now, and clearing it here is exactly the stranding bug.
+				if (token !== holdToken) return;
+
+				if (anchor && top !== undefined && scroller) {
+					const delta = anchor.getBoundingClientRect().top - top;
+					if (delta) scroller.scrollTop += delta;
+				}
+
+				if (performance.now() - started < moveMs() + 80) {
+					requestAnimationFrame(hold);
+				} else {
+					settling = false;
+					unlock();
+				}
 			};
 			requestAnimationFrame(hold);
 		},

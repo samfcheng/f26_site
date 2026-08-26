@@ -14,6 +14,7 @@
 		offset = 0,
 		lift = 0,
 		stacked = false,
+		depth = 0,
 		z = 1,
 		delay = 0,
 		onhover = () => {},
@@ -22,6 +23,9 @@
 
 	const deck = getDeck();
 	const Slide = $derived(slide.component);
+
+	/** See the note in DeckCard — same wash, so the two panes stay in step. */
+	const wash = $derived(stacked ? motion.recede * (depth + 1) : 0);
 	const isActive = $derived(deck.activeId === slide.id);
 	const isParent = $derived(Boolean(slide.children?.length));
 
@@ -55,8 +59,10 @@
 	>
 		<button
 			class="thumb"
+			class:stacked
 			style:transform={lift ? `translateY(${lift}px)` : null}
-			style:transition="transform {hoverMs()}ms {EASE_OUT}"
+			style:transition="transform {hoverMs()}ms {EASE_OUT},
+				box-shadow {moveMs()}ms {EASE_OUT} {delay}ms"
 			onclick={() => {
 				deck.activate(slide.id);
 				onnavigate();
@@ -69,6 +75,13 @@
 			<SlideStage>
 				<Slide />
 			</SlideStage>
+
+			<span
+				class="recede"
+				style:opacity={wash}
+				style:transition="opacity {moveMs()}ms {EASE_OUT} {delay}ms"
+				aria-hidden="true"
+			></span>
 		</button>
 	</div>
 </div>
@@ -110,6 +123,7 @@
 	}
 
 	.thumb {
+		position: relative;
 		display: block;
 		width: 100%;
 		padding: 0;
@@ -123,6 +137,22 @@
 
 	.thumb :global(*) {
 		pointer-events: none;
+	}
+
+	/* The ring stays, so the thumbnail's border doesn't appear to stop where the
+	   sliver starts, plus a cast shadow so the sliver survives a light thumbnail
+	   on a light pane. See the note in DeckCard. Unstacked thumbnails are ring
+	   only — a shadow on every row is heavy in a pane this narrow. */
+	.thumb.stacked {
+		box-shadow:
+			0 0 0 1px var(--line),
+			var(--card-shadow-sm);
+	}
+
+	.recede {
+		position: absolute;
+		inset: 0;
+		background: var(--stack-wash);
 	}
 
 
