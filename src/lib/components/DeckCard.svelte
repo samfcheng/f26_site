@@ -1,7 +1,7 @@
 <script>
 	import SlideStage from './SlideStage.svelte';
 	import { getDeck } from '$lib/deck.svelte.js';
-	import { EASE_OUT, hoverMs, motion, moveMs } from '$lib/motion.svelte.js';
+	import { hoverMs, motion, moveMs } from '$lib/motion.svelte.js';
 
 	/**
 	 * One slide in the scrolling deck. A sub-slide is the same element whether
@@ -73,7 +73,7 @@
 	class="slot"
 	style:transform={transform || null}
 	style:z-index={z}
-	style:transition="transform {moveMs()}ms {EASE_OUT} {delay}ms"
+	style:transition="transform {moveMs()}ms {motion.deckEasing} {delay}ms"
 >
 	<!-- `role` and `tabindex` are applied together, but only for parent slides, so
 	     the compiler can't see that the element is interactive when it is focusable. -->
@@ -84,7 +84,7 @@
 		class:stacked
 		id="slide-{slide.id}"
 		style:transform={lift ? `translateY(${lift}px)` : null}
-		style:transition="transform {hoverMs()}ms {EASE_OUT}"
+		style:transition="transform {hoverMs()}ms {motion.deckEasing}"
 		aria-label={slide.title}
 		aria-current={isActive ? 'true' : undefined}
 		role={isParent ? 'button' : undefined}
@@ -101,7 +101,7 @@
 		<div
 			class="recede"
 			style:opacity={wash}
-			style:transition="opacity {moveMs()}ms {EASE_OUT} {delay}ms"
+			style:transition="opacity {moveMs()}ms {motion.deckEasing} {delay}ms"
 			aria-hidden="true"
 		></div>
 	</article>

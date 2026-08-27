@@ -1,5 +1,5 @@
 import { getContext, setContext } from 'svelte';
-import { moveMs } from './motion.svelte.js';
+import { moveMs, motion } from './motion.svelte.js';
 import { slides } from './slides/index.js';
 
 const DECK_KEY = Symbol('deck');
@@ -63,6 +63,8 @@ export function createDeck(slides) {
 	let locked = false;
 	/** @type {ReturnType<typeof setTimeout> | undefined} */
 	let unlockTimer;
+	/** @type {ReturnType<typeof setTimeout> | undefined} */
+	let revealTimer;
 
 	function unlock() {
 		locked = false;
@@ -140,11 +142,38 @@ export function createDeck(slides) {
 		/**
 		 * Clicking a slide selects it; clicking the one that is already selected
 		 * opens or closes its sub-slides.
+		 *
+		 * In the deck, a collapsed parent that is not yet selected used to take
+		 * two clicks — one to travel to it, another to open it — which made the
+		 * cursor's "Click to expand" a promise the first click did not keep. It
+		 * now does both, in that order: come to the slide, let the reader
+		 * arrive, then open. The wait is what keeps it legible as two things
+		 * rather than a scroll and a reflow landing at once.
+		 *
+		 * The sidebar passes `expand: false`: a thumbnail click is a jump, not a
+		 * click on the slide itself, so it only takes the selection there. The
+		 * group still opens on a second click, the same as any selected parent.
+		 *
 		 * @param {string} id
+		 * @param {{ expand?: boolean }} [options]
 		 */
-		activate(id) {
-			if (id === activeId && byId.get(id)?.children?.length) deck.toggle(id);
-			else deck.scrollTo(id);
+		activate(id, { expand = true } = {}) {
+			clearTimeout(revealTimer);
+
+			const hasChildren = Boolean(byId.get(id)?.children?.length);
+			if (id === activeId && hasChildren) {
+				deck.toggle(id);
+				return;
+			}
+
+			deck.scrollTo(id);
+
+			if (!expand || !hasChildren || !collapsedMap[id]) return;
+			revealTimer = setTimeout(() => {
+				// Anything the reader did in the meantime wins — another slide
+				// selected, or this group opened some other way.
+				if (activeId === id && collapsedMap[id]) deck.toggle(id);
+			}, motion.expandDelayMs);
 		},
 
 		/**
@@ -154,6 +183,13 @@ export function createDeck(slides) {
 		 * @param {string} id
 		 */
 		toggle(id) {
+			clearTimeout(revealTimer);
+			// A `scrollTo` may still have a `scrollend` pending — it fires about when
+			// an expand triggered by `activate` begins, and would unlock the
+			// selection halfway through the animation, letting the observer hand it
+			// to whichever slide happened to be crossing the middle.
+			scroller?.removeEventListener('scrollend', unlock);
+
 			// Collapsing the group the reader is inside: hand the selection back to
 			// the parent, and anchor on it instead of the slide about to disappear.
 			const collapsing = !collapsedMap[id];
