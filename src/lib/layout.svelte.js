@@ -35,7 +35,7 @@ export function stage() {
 
 const SIDEBAR_KEY = 'f26:sidebar-width';
 
-export const SIDEBAR = { min: 220, max: 520, default: 296 };
+export const SIDEBAR = { min: 220, max: 520, default: 250 };
 
 /** Chrome the user can drag around. Restored from the last visit. */
 export const chrome = $state({ sidebarWidth: SIDEBAR.default });

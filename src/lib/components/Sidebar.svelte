@@ -177,7 +177,7 @@
 
 <style>
 	.sidebar {
-		width: var(--sidebar-w, 296px);
+		width: var(--sidebar-w, 250px);
 		flex: none;
 		height: 100dvh;
 		display: flex;
