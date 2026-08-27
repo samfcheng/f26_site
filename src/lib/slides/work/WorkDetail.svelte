@@ -99,6 +99,7 @@
 		width: auto;
 		height: 100%;
 		border-radius: 0.25rem;
+		border: 1px solid rgb(0 0 0 / 0.05);
 	}
 
 	.name {

@@ -61,7 +61,9 @@
 		{/if}
 	</div>
 
-	{#if !sidebarOpen}
+	<!-- Mobile is the deck and nothing else: no floating chrome over the slides,
+	     and no show to start from a phone. Scrolling is the whole navigation. -->
+	{#if !sidebarOpen && !mobile}
 		<button
 			class="icon-button floating"
 			onclick={() => (sidebarOpen = true)}
@@ -73,7 +75,9 @@
 
 	<div class="deck-area">
 		<Deck />
-		<PresentButton onpresent={start} hidden={!deck.topClear} />
+		{#if !mobile}
+			<PresentButton onpresent={start} hidden={!deck.topClear} />
+		{/if}
 	</div>
 </div>
 

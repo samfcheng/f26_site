@@ -57,11 +57,13 @@
 
 		<p class="line">
 			{#each socials as social (social.label)}
+				<!-- `data-href` names the destination for the deck cursor. -->
 				<span
 					class="chip"
 					style:--fill={social.fill}
 					role="link"
 					tabindex="0"
+					data-href={social.href}
 					onclick={open(social.href)}
 					onkeydown={keys(social.href)}
 				>
@@ -76,6 +78,7 @@
 				class="chip"
 				role="link"
 				tabindex="0"
+				data-href="mailto:{EMAIL}"
 				onclick={open(`mailto:${EMAIL}`)}
 				onkeydown={keys(`mailto:${EMAIL}`)}
 			>

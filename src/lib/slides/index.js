@@ -21,7 +21,7 @@ export const slides = [
 		id: 'title',
 		title: 'Sam Cheng',
 		component: TitleSlide,
-		notes: 'Open with the name. Say hello, then move on.'
+		notes: 'Notes are all placeholders for now. They\'ll be filled in later.'
 	},
 	{
 		id: 'multiply',

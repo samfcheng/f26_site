@@ -94,7 +94,16 @@
 			<!-- Deliberately not an <a>: in the sidebar this slide is the content of
 			     a <button>, and the parser would break that nesting apart on
 			     hydration. `role` carries the meaning the element can't. -->
-			<span class="action" role="link" tabindex="0" onclick={open} {onkeydown}>
+			<!-- `data-href` is what the deck cursor reads to name the destination;
+			     the click still goes through `open`. -->
+			<span
+				class="action"
+				role="link"
+				tabindex="0"
+				data-href={action.href}
+				onclick={open}
+				{onkeydown}
+			>
 				{action.label}
 				<span class="arrow" aria-hidden="true">
 					<IconArrowRight size={24} stroke={1.5} />

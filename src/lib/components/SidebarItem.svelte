@@ -1,7 +1,7 @@
 <script>
 	import SlideStage from './SlideStage.svelte';
 	import { getDeck } from '$lib/deck.svelte.js';
-	import { EASE_OUT, hoverMs, motion, moveMs } from '$lib/motion.svelte.js';
+	import { hoverMs, motion, moveMs } from '$lib/motion.svelte.js';
 
 	/**
 	 * A thumbnail row in the sidebar. Sub-slides are the same rows whether their
@@ -45,8 +45,8 @@
 		class="num"
 		style:opacity={stacked ? 0 : 1}
 		style:transform={numberTransform}
-		style:transition="opacity {motion.fadeMs}ms {EASE_OUT} {numberDelay}ms,
-			transform {moveMs()}ms {EASE_OUT} {delay}ms"
+		style:transition="opacity {motion.fadeMs}ms {motion.deckEasing} {numberDelay}ms,
+			transform {moveMs()}ms {motion.deckEasing} {delay}ms"
 	>
 		{label}
 	</span>
@@ -55,16 +55,18 @@
 		class="thumb-wrap"
 		style:transform={transform || null}
 		style:z-index={z}
-		style:transition="transform {moveMs()}ms {EASE_OUT} {delay}ms"
+		style:transition="transform {moveMs()}ms {motion.deckEasing} {delay}ms"
 	>
 		<button
 			class="thumb"
 			class:stacked
 			style:transform={lift ? `translateY(${lift}px)` : null}
-			style:transition="transform {hoverMs()}ms {EASE_OUT},
-				box-shadow {moveMs()}ms {EASE_OUT} {delay}ms"
+			style:transition="transform {hoverMs()}ms {motion.deckEasing},
+				box-shadow {moveMs()}ms {motion.deckEasing} {delay}ms"
 			onclick={() => {
-				deck.activate(slide.id);
+				// A thumbnail click only takes the selection there — the group opens
+				// on a second click, not automatically on arrival.
+				deck.activate(slide.id, { expand: false });
 				onnavigate();
 			}}
 			onmouseenter={isParent ? () => onhover(true) : undefined}
@@ -79,7 +81,7 @@
 			<span
 				class="recede"
 				style:opacity={wash}
-				style:transition="opacity {moveMs()}ms {EASE_OUT} {delay}ms"
+				style:transition="opacity {moveMs()}ms {motion.deckEasing} {delay}ms"
 				aria-hidden="true"
 			></span>
 		</button>

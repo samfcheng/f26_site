@@ -31,45 +31,57 @@
 <section class="slide">
 	<h1 class="title">
 		<div class="line">
-			<span>I'm</span>
-			<div class="chip headshot"></div>
-			<span><span class="name">Sam Cheng</span>,</span>
-			<span>a</span>
-			<div class="note-wrap">
-				<!-- A real <button> would be nested inside the sidebar thumbnail's
-				     button, which the HTML parser breaks apart on hydration. -->
-				<span
-					class="design-chip"
-					class:active={noteOpen}
-					role="button"
-					tabindex="0"
-					aria-label="Learn more"
-					aria-expanded={noteOpen}
-					onclick={() => (noteOpen = !noteOpen)}
-					{onkeydown}
-				>
-					<span class="x-icon"></span>
-					<span class="left-corners"></span>
-					<span class="right-corners"></span>
-				</span>
-				<span class="note" class:open={noteOpen}>
-					I love designing valuable products and telling meaningful stories
-				</span>
+			<div class="row">
+				<span>I'm</span>
+				<div class="chip headshot"></div>
+				<span><span class="name">Sam Cheng</span>,</span>
 			</div>
-			<span>designer &amp;</span>
+			<div class="row">
+				<span>a</span>
+				<div class="note-wrap">
+					<!-- A real <button> would be nested inside the sidebar thumbnail's
+					     button, which the HTML parser breaks apart on hydration. -->
+					<span
+						class="design-chip"
+						class:active={noteOpen}
+						role="button"
+						tabindex="0"
+						aria-label="Learn more"
+						aria-expanded={noteOpen}
+						onclick={() => (noteOpen = !noteOpen)}
+						{onkeydown}
+					>
+						<span class="x-icon"></span>
+						<span class="left-corners"></span>
+						<span class="right-corners"></span>
+					</span>
+					<span class="note" class:open={noteOpen}>
+						I love designing valuable products and telling meaningful stories
+					</span>
+				</div>
+				<span>designer<span class="amp-end">&nbsp;&amp;</span></span>
+			</div>
 		</div>
 		<div class="line">
-			<span>storyteller</span>
-			<div class="wave" class:waving onmouseenter={wave} aria-hidden="true">
-				<img src="/assets/icon-wave.svg" alt="" />
+			<div class="row">
+				<!-- Portrait breaks the headline a word earlier, and `&` can't move
+				     between the two rows — so it is written in both, and whichever
+				     row is the one being drawn shows its own. -->
+				<span class="amp-start">&amp;</span>
+				<span>storyteller</span>
+				<div class="wave" class:waving onmouseenter={wave} aria-hidden="true">
+					<img src="/assets/icon-wave.svg" alt="" />
+				</div>
 			</div>
-			<span>based in</span>
-			<div class="chip california"></div>
-			<div class="california-wrap">
-				<span class="california-text">California</span>
-				{#each { length: 8 }}
-					<img class="flower" src="/assets/flower.svg" alt="" aria-hidden="true" />
-				{/each}
+			<div class="row">
+				<span>based in</span>
+				<div class="chip california"></div>
+				<div class="california-wrap">
+					<span class="california-text">California</span>
+					{#each { length: 8 }}
+						<img class="flower" src="/assets/flower.svg" alt="" aria-hidden="true" />
+					{/each}
+				</div>
 			</div>
 		</div>
 	</h1>
@@ -119,6 +131,18 @@
 		display: flex;
 		align-items: center;
 		gap: 0.2em;
+	}
+
+	/* The rows are where portrait breaks the headline. Everywhere else they
+	   dissolve — their children become items of the line's own flex row, which
+	   is the layout as if the wrappers were not there at all. */
+	.row {
+		display: contents;
+	}
+
+	/* The portrait ampersand — the landscape one is inline in `designer &`. */
+	.amp-start {
+		display: none;
 	}
 
 	/* Headshot and bridge. The cutout is a square anchored to the bottom of the
@@ -424,7 +448,14 @@
 	}
 
 	/* Sized in its own `em`, so the note scales with the headline: the numbers
-	   are the site's px values over its 14px note text. */
+	   are the site's px values over its 14px note text. Every dimension below is
+	   in that em, line breaks included — so the floor makes the whole popup
+	   bigger and it still breaks into the same two lines.
+
+	   The floor is the one place this slide stops scaling with its frame. At the
+	   portrait headline's size the proportional value lands near 9px, which is
+	   body copy on a phone rendered at footnote size: legibility is not
+	   proportional, and 12px is where this stops being a squint. */
 	.note {
 		position: absolute;
 		z-index: 2;
@@ -438,7 +469,7 @@
 		border-radius: 0.571em;
 		background: #000000;
 		color: #ffffff;
-		font-size: 0.292em;
+		font-size: max(12px, 0.292em);
 		font-weight: 400;
 		letter-spacing: initial;
 		line-height: 1.3;
@@ -502,6 +533,58 @@
 		}
 		100% {
 			transform: rotate(20deg);
+		}
+	}
+
+	/* Portrait. Two rows of headline on a phone are two rows of small type — the
+	   width is the constraint, so the only way to make the words bigger is to
+	   give them more rows. Four, broken where the phrase breaks: the name, what
+	   I do, what I am, where I am. The chip still takes the slack in its row, so
+	   the composition holds. */
+	@container slide (aspect-ratio < 0.9) {
+		.title {
+			font-size: 8.4cqw;
+		}
+
+		/* Four rows, each its own flex line. `width: fit-content` on the title
+		   then measures the widest of them — `based in 🌉 California`, with the
+		   bridge at the size it was drawn — and that width is what the other
+		   three fill. The headline is as wide as it needs to be, not as wide as
+		   the card. */
+		.line {
+			display: block;
+		}
+
+		.row {
+			display: flex;
+			align-items: center;
+			gap: 0.2em;
+		}
+
+		.amp-end {
+			display: none;
+		}
+
+		.amp-start {
+			display: block;
+		}
+
+		/* One element per row takes the slack, so all four come out level. The
+		   orange chip already worked this way; in portrait the headshot and the
+		   wave earn their keep too. The bridge is left out on purpose — it sets
+		   the width, so it keeps its shape. */
+		.headshot,
+		.wave {
+			flex-grow: 1;
+		}
+
+		/* A chip growing must not take its cutout with it: the photo keeps the
+		   size it was drawn at and centres in the wider block. */
+		.headshot::after {
+			left: 50%;
+			right: auto;
+			width: 1.1em;
+			transform: translateX(-50%);
 		}
 	}
 

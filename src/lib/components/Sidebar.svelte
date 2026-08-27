@@ -4,7 +4,6 @@
 	import { getDeck } from '$lib/deck.svelte.js';
 	import {
 		EASE_IN_OUT,
-		EASE_OUT,
 		hoverOffset,
 		motion,
 		moveMs,
@@ -146,7 +145,7 @@
 					style:height="{collapsed
 						? stackHeight(n, motion.thumbPeek, motion.maxStack)
 						: n * pitch}px"
-					style:transition="height {moveMs()}ms {EASE_OUT}"
+					style:transition="height {moveMs()}ms {motion.deckEasing}"
 				>
 					{#each slide.children as child, j (child.id)}
 						{@const stack = stackTransform(

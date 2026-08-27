@@ -1,8 +1,8 @@
 <script>
 	import DeckCard from './DeckCard.svelte';
+	import DeckCursor from './DeckCursor.svelte';
 	import { getDeck } from '$lib/deck.svelte.js';
 	import {
-		EASE_OUT,
 		hoverOffset,
 		motion,
 		moveMs,
@@ -25,6 +25,9 @@
 
 	/** Id of the collapsed group currently under the pointer. */
 	let hovered = $state('');
+
+	/** True while the deck cursor is standing in for the pointer. */
+	let cued = $state(false);
 
 	// The Present button floats over the top-right of the deck at `--gap`. Once
 	// the first slide climbs into that corner the button is sitting on a slide,
@@ -117,6 +120,7 @@
 
 <main
 	class="deck"
+	class:cued
 	bind:this={scroller}
 	onscroll={checkTop}
 	style="--pad: max(4vh, calc(50dvh - {pad}px))"
@@ -138,7 +142,7 @@
 					style:height="{collapsed
 						? stackHeight(n, motion.deckPeek, motion.maxStack)
 						: n * pitch}px"
-					style:transition="height {moveMs()}ms {EASE_OUT}"
+					style:transition="height {moveMs()}ms {motion.deckEasing}"
 				>
 					{#each slide.children as child, i (child.id)}
 						{@const stack = stackTransform(
@@ -165,6 +169,8 @@
 	</div>
 </main>
 
+<DeckCursor {scroller} bind:active={cued} />
+
 <style>
 	.deck {
 		flex: 1;
@@ -181,6 +187,18 @@
 		padding-inline: var(--gap);
 	}
 
+	/* The padding exists to centre the first and last slide in a viewport they
+	   don't fill. On mobile they nearly do, so most of it only reads as dead
+	   space above the deck. What is left is the gap the slides already sit in —
+	   the same distance from the top of the scroller as from the sides, and from
+	   each other. Nothing at the bottom: the last slide's own margin is already
+	   that gap. Breakpoint tracks `isMobile()` in layout.svelte.js. */
+	@media (max-width: 860px) {
+		.track {
+			padding-block: var(--gap) 0;
+		}
+	}
+
 	/* Holds the group's sub-slides. Collapsed, it is just tall enough for the
 	   stack to peek out; expanded, it is the full height of its slides. The
 	   cards themselves overflow it while they are tucked behind the parent.
@@ -194,6 +212,14 @@
 
 	.group.ready {
 		visibility: visible;
+	}
+
+	/* The pill *is* the cursor while it is up, so the arrow goes. The descendant
+	   rule is what actually does the work — the slides set their own cursors on
+	   cards and links, and those would otherwise win. */
+	.deck.cued,
+	.deck.cued :global(*) {
+		cursor: none;
 	}
 
 </style>
