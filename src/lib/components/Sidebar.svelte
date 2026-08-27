@@ -32,18 +32,6 @@
 	/** Id of the collapsed group currently under the pointer. */
 	let hovered = $state('');
 
-	// Measured from a real row, so the stack geometry can't drift from the CSS.
-	$effect(() => {
-		listWidth;
-		const row = list?.querySelector('.row');
-		const thumb = row?.querySelector('.thumb');
-		if (!row || !thumb) return;
-		const box = thumb.getBoundingClientRect();
-		thumbWidth = box.width;
-		thumbHeight = box.height;
-		pitch = row.getBoundingClientRect().height + parseFloat(getComputedStyle(row).marginBottom);
-	});
-
 	// The selection is one block that slides between rows rather than a fill that
 	// pops on and off each row. When the selected row is a collapsed parent the
 	// block grows to wrap its stack, and shrinks back as the group opens.
@@ -73,6 +61,41 @@
 		selectionHeight = rowBox.height + stack;
 		selectionReady = true;
 	}
+
+	// Measured from a real row, so the stack geometry can't drift from the CSS.
+	//
+	// Watched rather than read once per list width: a thumbnail also changes
+	// height when the window crosses a breakpoint and the slide canvas changes
+	// shape — 16:9 to square to portrait — and the list is exactly as wide
+	// either side of that. Geometry measured before the change is what leaves
+	// the sub-slides hanging below their parent instead of tucked behind it.
+	$effect(() => {
+		const row = list?.querySelector('.row');
+		const thumb = row?.querySelector('.thumb');
+		if (!row || !thumb) return;
+
+		const measure = () => {
+			const box = thumb.getBoundingClientRect();
+			thumbWidth = box.width;
+			thumbHeight = box.height;
+			pitch = row.getBoundingClientRect().height + parseFloat(getComputedStyle(row).marginBottom);
+		};
+
+		// The list is watched as well as the thumbnail: it re-centres its rows as
+		// it changes height, so a shorter window moves every row without any of
+		// them changing size — and the selection block, which is placed against a
+		// row, has to come along.
+		const remeasure = () => {
+			measure();
+			measureSelection();
+		};
+
+		measure();
+		const observer = new ResizeObserver(remeasure);
+		observer.observe(thumb);
+		if (list) observer.observe(list);
+		return () => observer.disconnect();
+	});
 
 	$effect(() => {
 		// Re-measure when rows move, not only when the selection changes.

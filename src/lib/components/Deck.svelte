@@ -61,14 +61,27 @@
 
 	// Measured rather than derived from the aspect ratio, so the stack geometry
 	// can't drift from whatever the CSS actually produces.
+	//
+	// Watched rather than read once per track width: a card is capped against
+	// the viewport height, so dragging a window shorter resizes every card
+	// without the track changing width at all — and the stack would go on being
+	// drawn for the card's old height. Same on a breakpoint, where the canvas
+	// changes shape under a track that hasn't moved.
 	$effect(() => {
-		trackWidth;
 		const slot = track?.querySelector('.slot');
 		if (!slot) return;
-		const box = slot.getBoundingClientRect();
-		cardWidth = box.width;
-		cardHeight = box.height;
-		pitch = cardHeight + parseFloat(getComputedStyle(slot).marginBottom);
+
+		const measure = () => {
+			const box = slot.getBoundingClientRect();
+			cardWidth = box.width;
+			cardHeight = box.height;
+			pitch = cardHeight + parseFloat(getComputedStyle(slot).marginBottom);
+		};
+
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(slot);
+		return () => observer.disconnect();
 	});
 
 	// Padding that puts the first and last slide in the middle of the viewport.

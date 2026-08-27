@@ -330,6 +330,16 @@
 		flex-grow: 1;
 	}
 
+	/* A second click on a chip is the reader closing what the first one opened,
+	   and the browser reads that pair as a double-click on text — it has no
+	   words of its own, so it takes the note's instead and the popup lights up
+	   mid-sentence. Neither is text anyone means to select. */
+	.design-chip,
+	.note {
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
 	.design-chip {
 		position: relative;
 		display: grid;
