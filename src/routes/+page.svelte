@@ -3,6 +3,7 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import SidebarResizer from '$lib/components/SidebarResizer.svelte';
 	import Deck from '$lib/components/Deck.svelte';
+	import Metatags from '$lib/components/Metatags.svelte';
 	import PresentButton from '$lib/components/present/PresentButton.svelte';
 	import { deck, setDeck } from '$lib/deck.svelte.js';
 	import { chrome, isMobile, restoreChrome } from '$lib/layout.svelte.js';
@@ -38,10 +39,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Sam Cheng</title>
-	<meta name="description" content="Sam Cheng — portfolio" />
-</svelte:head>
+<Metatags />
 
 <svelte:window {onkeydown} />
 

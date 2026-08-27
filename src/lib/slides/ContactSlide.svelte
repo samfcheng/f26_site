@@ -94,6 +94,8 @@
 	   are three of them rather than one drawing at three sizes. */
 	.slide {
 		--px: calc(100cqw / 1920);
+		/* One pixel of the mock's type — see the note in WorkCover. */
+		--tx: calc(var(--px) * 1.125);
 		width: 100%;
 		height: 100%;
 		display: grid;
@@ -113,7 +115,7 @@
 
 	.lead {
 		margin: 0 0 calc(13 * var(--px));
-		font-size: calc(26 * var(--px));
+		font-size: calc(26 * var(--tx));
 		font-weight: 500;
 		line-height: 1.3;
 		text-align: center;
@@ -134,12 +136,12 @@
 	.chip {
 		display: inline-flex;
 		align-items: center;
-		height: calc(32 * var(--px));
-		padding: 0 calc(12 * var(--px));
+		height: calc(32 * var(--tx));
+		padding: 0 calc(12 * var(--tx));
 		border: calc(2 * var(--px)) solid #000000;
 		border-radius: 999px;
 		background: var(--fill, #ffffff);
-		font-size: calc(16 * var(--px));
+		font-size: calc(16 * var(--tx));
 		font-weight: 600;
 		letter-spacing: 0.02em;
 		line-height: 1;
@@ -180,19 +182,19 @@
 		}
 
 		.lead {
-			font-size: calc(20 * var(--px));
+			font-size: calc(20 * var(--tx));
 		}
 
 		.line {
 			gap: calc(8 * var(--px));
-			font-size: calc(17 * var(--px));
+			font-size: calc(17 * var(--tx));
 		}
 
 		.chip {
-			height: calc(24 * var(--px));
-			padding: 0 calc(8 * var(--px));
+			height: calc(24 * var(--tx));
+			padding: 0 calc(8 * var(--tx));
 			border-width: calc(1.5 * var(--px));
-			font-size: calc(10 * var(--px));
+			font-size: calc(10 * var(--tx));
 		}
 	}
 </style>

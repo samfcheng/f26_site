@@ -118,6 +118,13 @@
 	   sizes — see the note in WorkDetail.svelte. */
 	.work-slide {
 		--px: calc(100cqw / 1920);
+		/* One pixel of the mock's *type*. The mock is drawn for a projector, where
+		   the copy is read from across a room; in the deck the same slide is a
+		   card on a laptop or a phone, and at that size its 24px body lands under
+		   what anyone reads comfortably. So the composition keeps the mock's
+		   pixel and the words get a bigger one — every type number below is still
+		   the number from the mock. */
+		--tx: calc(var(--px) * 1.125);
 		--layers: 6;
 		position: relative;
 		width: 100%;
@@ -285,7 +292,7 @@
 
 	.name {
 		margin-left: calc(23 * var(--px));
-		font-size: calc(49 * var(--px));
+		font-size: calc(49 * var(--tx));
 		line-height: 1;
 	}
 
@@ -293,9 +300,9 @@
 	   a column of its own. */
 	.description {
 		margin: 0 calc(32 * var(--px)) 0 auto;
-		max-width: calc(830 * var(--px));
-		font-size: calc(24 * var(--px));
-		line-height: calc(36 * var(--px));
+		max-width: calc(830 * var(--tx));
+		font-size: calc(24 * var(--tx));
+		line-height: calc(36 * var(--tx));
 		text-align: right;
 	}
 
@@ -310,7 +317,7 @@
 		border-radius: 5rem;
 		background: var(--pill);
 		color: var(--pill-ink);
-		font-size: calc(24 * var(--px));
+		font-size: calc(24 * var(--tx));
 		line-height: 1;
 		cursor: pointer;
 	}
@@ -412,15 +419,15 @@
 
 		.name {
 			margin-left: 0;
-			font-size: calc(44 * var(--px));
+			font-size: calc(44 * var(--tx));
 		}
 
 		.description {
 			grid-area: 2 / 1 / 3 / 3;
 			margin: 0;
 			max-width: none;
-			font-size: calc(21 * var(--px));
-			line-height: calc(30 * var(--px));
+			font-size: calc(21 * var(--tx));
+			line-height: calc(30 * var(--tx));
 			text-align: left;
 		}
 
@@ -429,7 +436,7 @@
 			justify-self: end;
 			height: calc(52 * var(--px));
 			padding: 0 calc(26 * var(--px));
-			font-size: calc(20 * var(--px));
+			font-size: calc(20 * var(--tx));
 		}
 	}
 
@@ -463,18 +470,18 @@
 		}
 
 		.name {
-			font-size: calc(32 * var(--px));
+			font-size: calc(32 * var(--tx));
 		}
 
 		.description {
-			font-size: calc(15 * var(--px));
-			line-height: calc(22 * var(--px));
+			font-size: calc(15 * var(--tx));
+			line-height: calc(22 * var(--tx));
 		}
 
 		.action {
 			height: calc(40 * var(--px));
 			padding: 0 calc(20 * var(--px));
-			font-size: calc(15 * var(--px));
+			font-size: calc(15 * var(--tx));
 		}
 	}
 </style>

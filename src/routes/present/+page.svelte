@@ -1,4 +1,5 @@
 <script>
+	import Metatags from '$lib/components/Metatags.svelte';
 	import PresentStage from '$lib/components/present/PresentStage.svelte';
 	import PresentBar from '$lib/components/present/PresentBar.svelte';
 	import SlideCounter from '$lib/components/present/SlideCounter.svelte';
@@ -89,9 +90,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{slide.title} — presenting</title>
-</svelte:head>
+<Metatags title="Presentation View - {presentation.index + 1}" />
 
 <svelte:window {onpointermove} {onkeydown} />
 

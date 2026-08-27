@@ -13,7 +13,11 @@ import ContactSlide from './ContactSlide.svelte';
  * Slides with `children` are parents — their sub-slides can be collapsed,
  * which stacks them behind the parent in both the deck and the sidebar.
  *
- * @typedef {{ id: string, title: string, component: import('svelte').Component, notes?: string, children?: Slide[] }} Slide
+ * `dark` is how the slide reads, not what is in it: a card on a dark slide has
+ * to be ringed in light to show it sits above the one behind it, where the
+ * deck's usual dark hairline disappears.
+ *
+ * @typedef {{ id: string, title: string, component: import('svelte').Component, notes?: string, dark?: boolean, children?: Slide[] }} Slide
  * @type {Slide[]}
  */
 export const slides = [
@@ -21,19 +25,21 @@ export const slides = [
 		id: 'title',
 		title: 'Sam Cheng',
 		component: TitleSlide,
-		notes: 'Notes are all placeholders for now. They\'ll be filled in later.'
+		notes: 'Welcome to the speaker notes. This is the first slide. Here, I\'ll add some various notes on the decisions behind the portfolio and the projects. For this title slide, it\'s the same design as my previous portfolio. I\'m planning on redesigning this soon, and I love that the slides-based layout makes it feel much easier to edit and improve things in the future.'
 	},
 	{
 		id: 'multiply',
 		title: 'Multiply',
 		component: MultiplySlide,
-		notes: 'Summer internship. The product, and who it is for.',
+		notes: 'I worked at Multiply through the KP Fellowship in Summer 2026.',
+		dark: true,
 		children: [
 			{
 				id: 'multiply-detail',
 				title: 'Multiply — case study',
 				component: MultiplyDetailSlide,
-				notes: 'The screens, the team, and what the work was aiming at.'
+				notes: 'Coming soon.',
+				dark: true
 			}
 		]
 	},
@@ -41,13 +47,13 @@ export const slides = [
 		id: 'classmate',
 		title: 'Classmate',
 		component: ClassmateSlide,
-		notes: 'Founded it. What the problem was and who it is for.',
+		notes: 'Building and sharing Classmate was one of my most growth-oriented experiences. I learned so much and got so many opportunities out of building it.',
 		children: [
 			{
 				id: 'classmate-detail',
 				title: 'Classmate — case study',
 				component: ClassmateDetailSlide,
-				notes: 'Brand, product and build. The decision I would make again.'
+				notes: 'Coming soon.'
 			}
 		]
 	},
@@ -55,13 +61,15 @@ export const slides = [
 		id: 'olos',
 		title: 'Olos',
 		component: OlosSlide,
-		notes: 'Founding designer. Set the brand and the first surface.',
+		notes: 'Built for SEP\'s 10-week incubator. We presented at the end, and won demo day.',
+		dark: true,
 		children: [
 			{
 				id: 'olos-detail',
 				title: 'Olos — case study',
 				component: OlosDetailSlide,
-				notes: 'How the brand work fed the product work.'
+				notes: 'Coming soon.',
+				dark: true
 			}
 		]
 	},
@@ -69,7 +77,7 @@ export const slides = [
 		id: 'contact',
 		title: 'Say hello',
 		component: ContactSlide,
-		notes: 'Close: how to reach me, and an invitation to keep talking.'
+		notes: 'This slide is a placeholder for now - I\'m redesigning it soon.'
 	}
 ];
 

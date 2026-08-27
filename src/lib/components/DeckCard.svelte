@@ -81,6 +81,7 @@
 	<article
 		class="card"
 		class:parent={isParent}
+		class:dark={slide.dark}
 		class:stacked
 		id="slide-{slide.id}"
 		style:transform={lift ? `translateY(${lift}px)` : null}
@@ -135,6 +136,15 @@
 		background: #fff;
 		box-shadow:
 			0 0 0 1px var(--line),
+			var(--card-shadow);
+	}
+
+	/* The ring is a dark hairline, which a dark slide swallows — so the card in
+	   front and the sliver behind it meet with no edge between them. Lit from
+	   the other side, the same hairline does the same job. */
+	.card.dark {
+		box-shadow:
+			0 0 0 1px rgb(255 255 255 / 0.1),
 			var(--card-shadow);
 	}
 
