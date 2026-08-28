@@ -134,6 +134,29 @@
 	-webkit-font-smoothing: antialiased;
 }
 
+/* A dark theme, parked. Nothing switches it on: `data-theme` is hard-coded to
+   light on the <html> tag in app.html, so this block is only reachable by
+   changing that by hand. Kept because the palette is the work — turning it back
+   on is a boot script that reads a stored choice, and a control that writes one.
+
+   The chrome inverts; the slides do not. Nothing here touches `--stack-wash` or
+   the card shadows: those fall on the slides themselves — white paper in either
+   theme — and separate one card from the next, not a card from the pane. The
+   sidebar's hover wash is `#fff` for that reason too, not `--surface`. */
+:root[data-theme='dark'] {
+	--bg: #0f0f0f;
+	--surface: #1a1a1a;
+	--fg: #f5f5f5;
+	--muted: #808080;
+	/* Translucent for the same reason as the light pair, inverted: a hairline on
+	   a raised surface has to pick up whatever it sits on. */
+	--line: rgb(255 255 255 / 0.12);
+	--line-strong: rgb(255 255 255 / 0.2);
+	--hover: #262626;
+	--active: #303030;
+	--selected: #232323;
+}
+
 * {
 	box-sizing: border-box;
 }

@@ -64,6 +64,13 @@ export const DEFAULTS = {
 	    reason as the peek — these are pixels, not ratios. */
 	deckHoverLift: 5,
 	thumbHoverLift: 2,
+	/** How far a hovered thumbnail lightens. One wash, two amounts: the same
+	    white does very different things to the two tones — it lifts a dark slide
+	    bodily, where on a light one the ground barely moves and only the content
+	    fades. Which is why these are matched by eye, at /prototype, not set to
+	    one number. Keyed off the slide's `dark` flag. */
+	thumbHoverWashLight: 0.2,
+	thumbHoverWashDark: 0.1,
 	/** In step with `moveMs`, so the peek on hover and the expand it previews
 	    move at the same speed. */
 	hoverMs: 300,
@@ -217,6 +224,16 @@ export function cursorTilt() {
 export function hoverOffset(depth, lift) {
 	if (!hoverable.current || reduce.current) return 0;
 	return lift * (depth + 1);
+}
+
+/**
+ * Whether the pointer can hover at all. Hover cues driven from JS need the guard
+ * a CSS `:hover` gets from a media query — on touch every tap fires a phantom
+ * hover that then sticks. Not tied to reduced motion: these are states, not
+ * movement, and `hoverMs` already flattens how they arrive.
+ */
+export function canHover() {
+	return hoverable.current;
 }
 
 /**

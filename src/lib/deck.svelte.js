@@ -24,11 +24,6 @@ export function createDeck(slides) {
 	// positioned against a row has to keep re-measuring until this clears.
 	let settling = $state(false);
 
-	// Whether the top of the deck is still clear of the floating chrome. The
-	// Present button sits over the deck, so it gets out of the way as the first
-	// slide comes up to meet it. Reported by the deck, which owns the scroller.
-	let topClear = $state(true);
-
 	/** @type {Map<string, HTMLElement>} */
 	const cards = new Map();
 
@@ -98,16 +93,6 @@ export function createDeck(slides) {
 
 		get settling() {
 			return settling;
-		},
-
-		/** False once the first slide has reached the floating chrome. */
-		get topClear() {
-			return topClear;
-		},
-
-		/** @param {boolean} clear */
-		setTopClear(clear) {
-			topClear = clear;
 		},
 
 		/** Set from an intersection observer — ignored while a scroll is in flight. */

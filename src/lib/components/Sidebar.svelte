@@ -1,6 +1,6 @@
 <script>
-	import IconMenu2 from '@tabler/icons-svelte/icons/menu-2';
 	import SidebarItem from './SidebarItem.svelte';
+	import PresentButton from './present/PresentButton.svelte';
 	import { getDeck } from '$lib/deck.svelte.js';
 	import {
 		EASE_IN_OUT,
@@ -13,7 +13,7 @@
 		stackTransform
 	} from '$lib/motion.svelte.js';
 
-	let { onToggle, onnavigate = () => {} } = $props();
+	let { onpresent, onnavigate = () => {} } = $props();
 
 	const deck = getDeck();
 
@@ -127,12 +127,12 @@
 
 <aside class="sidebar">
 	<header>
-		<a class="wordmark" href="#slide-{deck.slides[0].id}">
+		<div class="wordmark">
 			<img src="/assets/logo_name.svg" alt="Sam Cheng" />
-		</a>
-		<button class="icon-button" onclick={onToggle} aria-label="Hide slide list">
-			<IconMenu2 size={20} stroke={1.75} />
-		</button>
+		</div>
+		<!-- Opens to the right: the menu is wider than the sidebar, so an
+		     end-aligned one would be cut off at the window edge. -->
+		<PresentButton {onpresent} align="start" />
 	</header>
 
 	<div class="list" bind:this={list} bind:clientWidth={listWidth}>
@@ -184,6 +184,7 @@
 							label={deck.numberOf(child.id)}
 							{onnavigate}
 							stacked={collapsed}
+							hovered={collapsed && hovered === slide.id}
 							depth={stack.depth}
 							z={n - j}
 							delay={j * staggerMs()}
@@ -210,6 +211,10 @@
 	}
 
 	header {
+		/* Above the list, which is its own stacking context — otherwise the
+		   present menu opens behind the thumbnails. */
+		position: relative;
+		z-index: 1;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -223,8 +228,14 @@
 	.wordmark {
 		display: inline-flex;
 		align-items: center;
-		/* Shrinks with the sidebar rather than pushing the toggle out of it. */
+		/* Shrinks with the sidebar rather than pushing the button out of it. */
 		min-width: 0;
+	}
+
+	/* Part of the parked dark theme — see the note in app.css. Pure black
+	   artwork, so one invert is the whole dark treatment for it. */
+	:global(:root[data-theme='dark']) .wordmark img {
+		filter: invert(1);
 	}
 
 	.wordmark img {

@@ -1,7 +1,7 @@
 <script>
 	import SlideStage from './SlideStage.svelte';
 	import { getDeck } from '$lib/deck.svelte.js';
-	import { hoverMs, motion, moveMs } from '$lib/motion.svelte.js';
+	import { canHover, hoverMs, motion, moveMs } from '$lib/motion.svelte.js';
 
 	/**
 	 * A thumbnail row in the sidebar. Sub-slides are the same rows whether their
@@ -14,6 +14,7 @@
 		offset = 0,
 		lift = 0,
 		stacked = false,
+		hovered = false,
 		depth = 0,
 		z = 1,
 		delay = 0,
@@ -29,6 +30,20 @@
 	const isActive = $derived(deck.activeId === slide.id);
 	const isParent = $derived(Boolean(slide.children?.length));
 
+	// A collapsed group is one object, so its whole stack lights together —
+	// `hovered` is the parent's hover arriving from the sidebar. Driven from here
+	// rather than a CSS `:hover` so both halves of that run off one value.
+	let hovering = $state(false);
+	const lit = $derived(canHover() && (hovering || hovered));
+	const hoverWash = $derived(
+		lit ? (slide.dark ? motion.thumbHoverWashDark : motion.thumbHoverWashLight) : 0
+	);
+
+	/** @param {boolean} on */
+	function hover(on) {
+		hovering = on;
+		if (isParent) onhover(on);
+	}
 
 	// The number rides down with its thumbnail rather than fading in at the
 	// destination, where it would appear in empty space ahead of the slide.
@@ -69,8 +84,8 @@
 				deck.activate(slide.id, { expand: false });
 				onnavigate();
 			}}
-			onmouseenter={isParent ? () => onhover(true) : undefined}
-			onmouseleave={isParent ? () => onhover(false) : undefined}
+			onmouseenter={() => hover(true)}
+			onmouseleave={() => hover(false)}
 			aria-current={isActive ? 'true' : undefined}
 			title={slide.title}
 		>
@@ -82,6 +97,13 @@
 				class="recede"
 				style:opacity={wash}
 				style:transition="opacity {moveMs()}ms {motion.deckEasing} {delay}ms"
+				aria-hidden="true"
+			></span>
+
+			<span
+				class="hover-wash"
+				style:opacity={hoverWash}
+				style:transition="opacity {hoverMs()}ms {motion.deckEasing}"
 				aria-hidden="true"
 			></span>
 		</button>
@@ -149,6 +171,17 @@
 		box-shadow:
 			0 0 0 1px var(--line),
 			var(--card-shadow-sm);
+	}
+
+	/* The card's own paper, not the pane's colour — which is why this is `#fff`
+	   and not `--surface`. A slide is white in either theme, so the wash that
+	   lightens it has to be too, and the two amounts stay tuned across the
+	   toggle. Painted over `.recede`, so a stacked sliver lifts from wherever its
+	   wash left it rather than from the slide's own colour. */
+	.hover-wash {
+		position: absolute;
+		inset: 0;
+		background: #fff;
 	}
 
 	.recede {

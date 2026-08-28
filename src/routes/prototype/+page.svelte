@@ -1,15 +1,18 @@
 <script>
 	import Deck from '$lib/components/Deck.svelte';
+	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { deck, setDeck } from '$lib/deck.svelte.js';
 	import { CURVES, DEFAULTS, motion, resetMotion } from '$lib/motion.svelte.js';
+	import { present } from '$lib/present.svelte.js';
 
 	/**
-	 * A bench for the deck's motion — the peek, and the cursor that sits over it.
+	 * A bench for the chrome's motion — the peek, the cursor over it, and the
+	 * thumbnail list beside it.
 	 *
-	 * The stage is the real `Deck`, on the real slides, in the real deck state.
-	 * Not a mock of it: every knob in the panel is the one the shipped deck
-	 * reads, so there is nothing here that can drift from what the site does.
-	 * `Deck` mounts `DeckCursor` itself, so both live previews come from one.
+	 * The stage is the real `Sidebar` and `Deck`, on the real slides, in the real
+	 * deck state. Not a mock of them: every knob in the panel is the one the
+	 * shipped site reads, so there is nothing here that can drift from what it
+	 * does. `Deck` mounts `DeckCursor` itself, so both live previews come from one.
 	 */
 	setDeck(deck);
 
@@ -24,7 +27,7 @@
 	 * }} Knob
 	 */
 
-	/** @type {{ title: string, curve: 'deckEasing' | 'cursorEasing', note: string, rows: Knob[] }[]} */
+	/** @type {{ title: string, curve?: 'deckEasing' | 'cursorEasing', note: string, rows: Knob[] }[]} */
 	const sections = [
 		{
 			title: 'Deck peek',
@@ -40,6 +43,16 @@
 				{ key: 'deckHoverLift', label: 'Hover lift', min: 0, max: 20, step: 1, unit: 'px' },
 				{ key: 'hoverMs', label: 'Hover', min: 60, max: 900, step: 10, unit: 'ms' },
 				{ key: 'expandDelayMs', label: 'Travel → open', min: 0, max: 2000, step: 50, unit: 'ms' }
+			]
+		},
+		{
+			title: 'Sidebar',
+			note: 'Hover a thumbnail. One wash, two amounts — the same white reads differently on a dark slide and a light one, so match them by eye.',
+			rows: [
+				{ key: 'thumbPeek', label: 'Peek', min: 1, max: 20, step: 1, unit: 'px' },
+				{ key: 'thumbHoverLift', label: 'Hover lift', min: 0, max: 12, step: 1, unit: 'px' },
+				{ key: 'thumbHoverWashLight', label: 'Wash · light', min: 0, max: 0.5, step: 0.01 },
+				{ key: 'thumbHoverWashDark', label: 'Wash · dark', min: 0, max: 0.5, step: 0.01 }
 			]
 		},
 		{
@@ -82,6 +95,7 @@
 <svelte:head><title>Motion — prototype</title></svelte:head>
 
 <div class="bench">
+	<Sidebar onpresent={(/** @type {boolean} */ notes) => present({ from: deck.activeId, notes })} />
 	<Deck />
 
 	<aside class="panel">
@@ -94,21 +108,24 @@
 			<h2>{section.title}</h2>
 			<p class="note">{section.note}</p>
 
-			<label class="field">
-				<span>Curve</span>
-				<select bind:value={motion[section.curve]}>
-					{#each Object.entries(CURVES) as [name, css] (name)}
-						<option value={css}>{name}</option>
-					{/each}
-					{#if !Object.values(CURVES).includes(motion[section.curve])}
-						<option value={motion[section.curve]}>custom</option>
-					{/if}
-				</select>
-			</label>
-			<label class="field">
-				<span>cubic-bezier</span>
-				<input class="mono" bind:value={motion[section.curve]} spellcheck="false" />
-			</label>
+			{#if section.curve}
+				{@const curve = section.curve}
+				<label class="field">
+					<span>Curve</span>
+					<select bind:value={motion[curve]}>
+						{#each Object.entries(CURVES) as [name, css] (name)}
+							<option value={css}>{name}</option>
+						{/each}
+						{#if !Object.values(CURVES).includes(motion[curve])}
+							<option value={motion[curve]}>custom</option>
+						{/if}
+					</select>
+				</label>
+				<label class="field">
+					<span>cubic-bezier</span>
+					<input class="mono" bind:value={motion[curve]} spellcheck="false" />
+				</label>
+			{/if}
 
 			{#each section.rows as row (row.key)}
 				<label class="field">
