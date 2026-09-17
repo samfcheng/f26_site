@@ -1,83 +1,73 @@
 <script>
-	import Sidebar from '$lib/components/Sidebar.svelte';
-	import SidebarResizer from '$lib/components/SidebarResizer.svelte';
-	import Deck from '$lib/components/Deck.svelte';
-	import Metatags from '$lib/components/Metatags.svelte';
-	import { deck, setDeck } from '$lib/deck.svelte.js';
-	import { chrome, isMobile, restoreChrome } from '$lib/layout.svelte.js';
-	import { present } from '$lib/present.svelte.js';
-	import { slides } from '$lib/slides/index.js';
-
-	setDeck(deck);
-
-	const mobile = $derived(isMobile());
-
-	$effect(() => {
-		restoreChrome();
-	});
-
-	/** @param {boolean} withNotes */
-	function start(withNotes) {
-		present({ from: deck.activeId, notes: withNotes });
-	}
-
-	/** @param {KeyboardEvent} event */
-	function onkeydown(event) {
-		if (event.key !== 'Enter' || !event.altKey || !(event.metaKey || event.ctrlKey)) return;
-		event.preventDefault();
-		start(event.shiftKey);
-	}
+  import { onMount } from 'svelte';
+  import { page } from '$app/state';
+  let mobile = $state(true);
+  let mobileBadge;
+  const badgeImage = $derived(page.url.searchParams.has('nofilter') ? '/assets/badge-mobile-unfiltered.png' : '/assets/badge-mobile.png');
+  onMount(() => {
+    const breakpoint = matchMedia('(max-width: 700px)');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let frame;
+    const update = () => {
+      frame = undefined;
+      if (mobileBadge) {
+        const progress = Math.min(Math.max(scrollY, 0) / innerHeight, 1);
+        mobileBadge.style.transform = `rotate(${reduced.matches ? 7 : 7 - progress * 12}deg)`;
+      }
+    };
+    const scroll = () => { if (frame === undefined) frame = requestAnimationFrame(update); };
+    const resize = () => { mobile = breakpoint.matches; scroll(); };
+    resize();
+    breakpoint.addEventListener('change', resize);
+    reduced.addEventListener('change', scroll);
+    window.addEventListener('scroll', scroll, { passive: true });
+    return () => {
+      breakpoint.removeEventListener('change', resize);
+      reduced.removeEventListener('change', scroll);
+      window.removeEventListener('scroll', scroll);
+      if (frame !== undefined) cancelAnimationFrame(frame);
+    };
+  });
+  import Footer from '$lib/components/Footer.svelte';
+  import Badge from '$lib/components/Badge.svelte';
+  import Work from '$lib/components/Work.svelte';
+  import Metatags from '$lib/components/Metatags.svelte';
 </script>
 
-<Metatags />
-
-<svelte:window {onkeydown} />
-
-<div class="app" class:mobile style:--sidebar-w="{chrome.sidebarWidth}px">
-	<!-- Mobile is the deck and nothing else: no slide list over the slides, and
-	     no show to start from a phone. Scrolling is the whole navigation. -->
-	<div class="sidebar-slot" class:closed={mobile}>
-		<Sidebar onpresent={start} />
-		{#if !mobile}
-			<SidebarResizer />
-		{/if}
-	</div>
-
-	<div class="deck-area">
-		<Deck />
-	</div>
-</div>
+<Metatags description="I design products and the stories behind them. Currently studying Arts, Technology, & Business at USC." />
+<a class="skip" href="#work">Skip to work</a>
+<main>
+  <section class="hero" aria-label="Introduction">
+    <p class="intro">I design products and<br />the stories behind them.</p>
+    <p class="education">Currently studying Arts,<br />Technology, &amp; Business @ USC</p>
+    <h1><span>Sam</span> <span>Cheng</span></h1>
+    {#if mobile}
+      <div class="mobile-badge">
+        <img bind:this={mobileBadge} src={badgeImage} alt="Sam Cheng badge in a clear sleeve" width="600" height="900" fetchpriority="high" />
+      </div>
+    {:else}
+      <Badge />
+    {/if}
+  </section>
+  <Work />
+</main>
+<Footer />
 
 <style>
-	.app {
-		display: flex;
-		height: 100dvh;
-		overflow: hidden;
-	}
-
-	.sidebar-slot {
-		position: relative;
-		flex: none;
-		/* Above the deck: the present menu opens past the sidebar's edge. */
-		z-index: 10;
-	}
-
-	.deck-area {
-		position: relative;
-		display: flex;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.app.mobile .sidebar-slot {
-		position: fixed;
-		inset: 0 auto 0 0;
-		z-index: 30;
-		transform: translateX(0);
-		transition: transform 240ms var(--ease-out);
-	}
-
-	.app.mobile .sidebar-slot.closed {
-		transform: translateX(-100%);
-	}
+  .skip{position:fixed;top:16px;left:16px;z-index:10;padding:12px;background:white;transform:translateY(-200%)}.skip:focus{transform:none}
+  .hero{position:relative;width:100%;height:100vh;background:#fff;overflow:hidden}
+  .intro,.education{position:absolute;top:100px;font-size:1rem;line-height:1.25;letter-spacing:-.02em;z-index:3;pointer-events:none}
+  .intro{left:var(--page-gutter)}.education{right:var(--page-gutter);text-align:right}
+  h1{position:absolute;left:-2.3vw;bottom:3vw;font-size:19.9vw;line-height:1;letter-spacing:-.02em;white-space:nowrap}
+  .mobile-badge{display:none}
+  @media(max-width:700px){
+    .hero{height:100svh;min-height:700px}
+    .intro,.education{font-size:1rem;line-height:1.25}
+    .intro{top:44px;left:32px}
+    .education{top:108px;right:32px}
+    h1{z-index:3;left:50%;right:auto;bottom:28px;width:max-content;transform:translateX(-50%);text-align:left;font-size:32vw;line-height:.88;letter-spacing:-.035em;white-space:normal;pointer-events:none}
+    h1 span{display:block}
+    .mobile-badge{display:flex;position:absolute;z-index:2;inset:174px 20px calc(56.32vw + 28px);align-items:center;justify-content:center;pointer-events:none}
+    .mobile-badge img{display:block;width:84%;height:100%;object-fit:contain;transform:rotate(7deg)}
+  }
 </style>
