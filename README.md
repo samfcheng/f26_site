@@ -1,85 +1,64 @@
-# f26_site
+# Sam Cheng — Portfolio
 
-Sam Cheng's portfolio, built as a slideshow editor: a scrolling deck of slides
-with a thumbnail sidebar, and a presentation mode with speaker notes.
+Desktop-first SvelteKit portfolio based on the F26 Figma design. Uses PP Kyoto,
+interactive Three.js / Rapier badge physics, and a shared plotter shader.
 
-The conceit is that the portfolio *is* the deck. There is no separate "site" and
-"slides" — the same components render as the scrolling page, as the sidebar
-thumbnails, and as the full-screen show.
+## Development
 
-```bash
+```sh
 npm install
 npm run dev
+npm run build
+npm test
 ```
 
-## Where things are
+- `src/routes/+page.svelte`: hero and footer layout.
+- `src/lib/components/Work.svelte`: hover/focus project previews.
+- `src/lib/projects.js`: original project descriptions, dates, and preview images.
+- `src/routes/work/[slug]`: prerendered case-study placeholders.
+- `src/lib/badge/settings.js`: original badge defaults with plotter enabled.
+- `static/assets/badge2.png`: printed badge artwork.
 
-```
-src/lib/slides/          one component per slide + index.js, the deck manifest
-src/lib/slides/work/     WorkCover / WorkDetail — the two shared project layouts
-src/lib/components/      SlideStage, Deck, Sidebar, and present/
-src/lib/deck.svelte.js   deck state: active slide, collapsed groups, card registry
-src/lib/motion.svelte.js every timing, curve and stack dimension
-src/lib/layout.svelte.js breakpoints, canvas sizes, sidebar width
-src/lib/present.svelte.js presentation state and cross-window sync
-static/work/<project>/   project imagery, WebP
-docs/                    the long-form documentation
-```
+## Rendering
 
-## Docs
+The badge is dynamically imported and pauses its animation frame loop and physics
+when outside the viewport or when the document is hidden. Pixel ratio is capped
+at 1.5. The original physical constraints and plotter defaults are retained.
 
-| | |
-| --- | --- |
-| [docs/architecture.md](docs/architecture.md) | How a slide gets on screen: the two rendering modes, the three shapes, `--px`, deck state, collapsing |
-| [docs/slides.md](docs/slides.md) | The manifest, `WorkCover` / `WorkDetail`, the dissolve, imagery, adding a slide |
-| [docs/presenting.md](docs/presenting.md) | The show, the two-window protocol, the fullscreen/Escape problem |
-| [docs/decisions.md](docs/decisions.md) | **Why the odd bits are odd.** Read before "simplifying" anything |
-| [docs/open-questions.md](docs/open-questions.md) | What is unfinished, unverified, or waiting on a call |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Conventions, and how to verify visual work properly |
+Work labels use the same shader, rendered at progressively larger stroke widths
+to cached 2D canvases after Kyoto loads
+and on debounced resize. One temporary WebGL context renders all three labels,
+then releases its GPU resources. Hover transitions interpolate those cached frames
+over 150 ms, from fine strokes to the selected 4.5 px plotter treatment. No animation
+loop runs once the transition settles. Accessible HTML labels remain underneath.
+Image entrances use interruptible CSS transitions (250 ms, 35 ms stagger), with
+keyboard focus and reduced-motion alternatives.
 
-## The shape of it in one page
+The largest download remains Rapier's embedded WASM (about 1.1 MB gzip including
+badge code). Further size reduction would require a different physics build or
+simpler simulation. Mobile-specific layout is intentionally deferred.
 
-**One component, three renderings.** `SlideStage` draws a slide either *fluid*
-(the deck and the show — real layout at real size) or *scaled* (thumbnails — laid
-out on a fixed canvas and shrunk, so a 240px row is a faithful miniature rather
-than a phone layout at unreadable size).
+Original project imagery remains in `static/work` for future case studies.
 
-**Three shapes, three drawings.** 16:9 above 1280px, square between 860 and
-1280, 3:4 below. A slide's frame has a fixed aspect, so content cannot reflow
-into extra height the way a page can — each shape is drawn separately, and each
-carries one number, `--px`, the size of one pixel of that shape's mock. Every
-other value in a slide is the number straight off the design.
+The hero fills the viewport height. Typography uses fixed pixel sizes (1 rem hero
+copy, 48 px section headings, 16 px project/footer copy); only the oversized hero
+name scales with viewport width. Project order is Multiply, Classmate, Olos.
 
-**The deck is the sidebar is the show.** Collapsing a group, selecting a slide
-and scrolling all run through `deck.svelte.js`, so both panes agree without
-knowing about each other.
+The selected Fan treatment uses 250 × 190 px previews, a 90% spread (225 px
+between cards, clamped to the available space), 8° rotation, a 64 px entrance
+lift from 0.95 scale, and 250 ms image motion with 35 ms stagger. Images have
+white backgrounds and 1 px borders at 10% black. There is no individual-image
+hover scaling. The prototype route was removed after promoting these settings.
 
-**The covers are matched to their mocks numerically**, not by eye — to a mean
-row-luminance difference of 1.09–2.47 across the dissolve. If you change one,
-re-diff it. [CONTRIBUTING.md](CONTRIBUTING.md#verifying-visual-work) explains how.
+## Desk work-page study
 
-## Type
-
-PP Neue Montreal, self-hosted from `static/fonts` and declared in `app.css`.
-`Book` sits between Light and Regular in this family, so it is mapped to 350 —
-the rest are the usual 100/300/400/500/600/700. Only 400 and 500 are used by any
-component, and those two are preloaded in `app.html`. If you start using another
-weight, preload it; if you stop using one, drop the preload — a preloaded font
-nothing uses is fetched at high priority on every page load for nothing.
-
-## Keyboard
-
-| | |
-| --- | --- |
-| `↑` `↓` `←` `→`, PageUp/PageDown | move between slides |
-| `⌥⌘↵` | present |
-| `⌥⇧⌘↵` | present with notes |
-| `Esc` | leave the show |
-
-## Scripts
-
-```bash
-npm run dev
-npm run build && npm run preview
-npm test                 # node --test, no browser needed
-```
+`/prototypes/work-desk` is an isolated, single-scene prototype based on the desk
+sketch: an aluminum monitor, notepad and pen, and coffee on a cool gray desk.
+It shares the badge's plotter shader and default settings. The monitor texture
+contains the project bento layout, with projected HTML links for keyboard access
+and case-study navigation. A damped perspective camera responds to mouse movement. A four-corner CSS
+projection keeps links aligned with the tilted screen. Rendering stops when
+settled, offscreen, or in a hidden tab, and reuses static shadow maps. The Work
+marquee uses CSS; reduced motion disables the marquee and camera movement.
+The section has no surrounding header, footer, or visible controls. Geometry, textures,
+shadow maps, render targets, and observers are released on navigation.
