@@ -48,7 +48,7 @@
 <main style:--project-color={study.color}>
   <div class="nav-island" bind:this={navContainer}>
   <nav bind:this={navigation} inert={navOffscreen} aria-label="Case study navigation">
-      <a class="back" href="/#work">← Back</a>
+      <a class="back" href="/#work">Back <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 10-5 4 5 4M4 14h11a4 4 0 0 0 0-8" /></svg></a>
       <div class="socials">
         <a href="https://linkedin.com/in/samfcheng" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         <a href="https://x.com/samfcheng" target="_blank" rel="noopener noreferrer">X</a>
@@ -64,7 +64,14 @@
     </div>
     <div class="hero-title">
       <h1>{project.name}</h1>
-      <p class="date">{project.date}</p>
+      <div class="hero-details">
+        <p class="date">{project.date}</p>
+        {#if project.website}
+          <a class="visit" href={project.website} target="_blank" rel="noopener noreferrer" aria-label="Visit {project.name} website (opens in a new tab)">
+            <span class="visit-label">Visit</span>
+          </a>
+        {/if}
+      </div>
     </div>
   </header>
 
@@ -119,12 +126,20 @@
   .nav-island{position:fixed;z-index:20;top:22px;left:50%;transform:translateX(-50%);width:550px;max-width:calc(100% - 40px)}
   nav{position:relative;width:100%;min-height:40px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;border-radius:999px;background:#000;color:#fff;font-size:16px}
   nav a{display:inline-block;padding:10px 5px;line-height:1.2}
-  nav a:hover{opacity:.7}
+  nav .back{display:inline-flex;align-items:center;gap:4px}
+  .back svg{display:block;flex:none;width:1em;height:1em}
+  nav a,.visit-label{transition:opacity 0.2s ease}
   nav a:focus-visible{outline-color:white;outline-offset:0;border-radius:4px}
-  .socials{display:flex;gap:6px;font-style:italic}
+  .socials{display:flex;gap:6px}
   .hero-title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none}
   h1{font-size:72px;line-height:1.05;letter-spacing:-.035em;font-weight:400}
-  .date{font-size:16px;font-weight:400;font-style:italic;background:#fff;border-radius:999px;padding:10px 18px;line-height:1.2}
+  .hero-details{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;max-width:100%;padding-inline:20px}
+  .date,.visit{font-size:16px;font-weight:400;border-radius:999px;padding:10px 18px;line-height:1.2;white-space:nowrap}
+  .date{background:#fff}
+  .visit{display:inline-flex;align-items:center;background:#000;color:#fff;pointer-events:auto;text-decoration:none}
+  @media(hover:hover) and (pointer:fine){
+    nav a:hover,.visit:hover .visit-label{opacity:.8}
+  }
   .hero-art img{position:absolute;top:112px;width:650px;max-width:none;border-radius:12px;box-shadow:0 10px 40px #00000012}
   .left{right:calc(50% + 310px)}
   .right{left:calc(50% + 310px)}
@@ -137,7 +152,7 @@
   .section-number{position:absolute;right:calc(100% + 16px);display:flex;align-items:center;gap:16px;white-space:nowrap}
   .rule{width:64px;height:1px;background:currentColor}
   .metadata{display:grid;grid-template-columns:1fr 1.5fr 1.4fr;gap:28px;margin:48px 0 28px;font-size:16px;line-height:1.45}
-  dt,h3{font-size:16px;font-style:italic;font-weight:500;margin:0 0 8px}
+  dt,h3{font-size:16px;font-weight:500;margin:0 0 8px}
   dd{margin:0}
   .copy p,.blurred-preview p{font-size:16px;font-weight:400;line-height:1.45}
   .copy h3:not(:first-child){margin-top:24px}

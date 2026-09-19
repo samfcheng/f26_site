@@ -2,6 +2,7 @@ export const projects = [
   {
     "name": "Multiply",
     "slug": "multiply",
+    "website": "https://withmultiply.com",
     "description": "Multiply is a fintech startup, helping offer financial employee benefits to 4.8m+ employees. As the first design intern, I interacted with all aspects of the company.",
     "date": "Summer 2026",
     "images": [
@@ -26,6 +27,7 @@ export const projects = [
   {
     "name": "Classmate",
     "slug": "classmate",
+    "website": "https://classmate.app",
     "description": "AI-powered writing feedback, for everyone. Designed and built as a solo-project, and helped students get into top schools including Harvard, Stanford, and Yale.",
     "date": "Aug 2024 – May 2026",
     "images": [
@@ -36,7 +38,7 @@ export const projects = [
     "caseStudy": {
       "color": "#fff791",
       "role": "Founder",
-      "team": "Just me :)",
+      "team": "Just me",
       "skills": "Brand, Design, Development",
       "context": "With the rise of AI, students are starting to use it to do their writing for them. I designed and built Classmate as a solo project to offer inline comments and feedback, similar to what a peer or tutor might give. Students have used it on applications to schools including Harvard, Stanford, and Yale.",
       "goal": "Help students use AI to strengthen their own writing instead of replacing it, with valuable feedback anchored to specific passages.",
@@ -60,7 +62,7 @@ export const projects = [
     "caseStudy": {
       "color": "#dce7ff",
       "role": "Founding Designer",
-      "team": "Two other sales/business co-founders",
+      "team": "Two other co-founders (sales/business)",
       "skills": "Brand, Design, Development",
       "context": "Olos is a pre-session analysis tool for healthcare practitioners. I built it with two of my closest friends during a 10-week sprint in the USC SEP incubator, working across the brand, product design, and development.",
       "goal": "Give practitioners useful context before an appointment. Patients record a voice note ahead of their visit, and Olos turns it into a preview of their background and what they want to discuss.",
