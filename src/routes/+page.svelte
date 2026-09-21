@@ -3,7 +3,7 @@
   import { page } from '$app/state';
   let mobile = $state(true);
   let mobileBadge;
-  const badgeImage = $derived(page.url.searchParams.has('nofilter') ? '/assets/badge-mobile-unfiltered.png' : '/assets/badge-mobile.png');
+  const badgeImage = $derived(page.url.searchParams.has('filter') ? '/assets/badge-mobile.png' : '/assets/badge_nofilter.png');
   onMount(() => {
     const breakpoint = matchMedia('(max-width: 700px)');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');

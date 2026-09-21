@@ -1,7 +1,7 @@
 <script>
   import { page } from '$app/state';
   import { projects } from '$lib/projects.js';
-  const noFilter = $derived(page.url.searchParams.has('nofilter'));
+  const noFilter = $derived(!page.url.searchParams.has('filter'));
   let hovered = $state(null), focused = $state(null);
   const active = $derived(hovered ?? focused);
   let animateLabels = $state.raw(null);

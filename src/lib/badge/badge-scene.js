@@ -63,7 +63,7 @@ function sleeveWear() {
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;return texture;
 }
 
-export async function createBadgeScene(canvas, getSettings, onState) {
+export async function createBadgeScene(canvas, getSettings, onState, cardUrl = CARD_URL) {
   await RAPIER.init();
   let disposed=false, raf=0, paused=false, dragging=false, activePointer=null, accumulator=0, lastTime=0;
   let inView=true;
@@ -73,7 +73,8 @@ export async function createBadgeScene(canvas, getSettings, onState) {
   const scene=new THREE.Scene();
   scene.background=new THREE.Color('#efeee7');
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+  const unlitArtwork=getSettings().material.unlitArtwork === true;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,unlitArtwork?2:1.5));
   renderer.setClearColor(0x000000,0);
   renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -177,7 +178,11 @@ export async function createBadgeScene(canvas, getSettings, onState) {
   }
   const paperMat=new THREE.MeshStandardMaterial({color:'#efebdf',roughness:.88});
   const paper=mesh(new RoundedBoxGeometry(2.40,3.52,.025,3,.019),paperMat,badge,0,-.30,.025);paper.castShadow=true;
-  const frontMat=new THREE.MeshStandardMaterial({roughness:.84,metalness:0,bumpMap:plasticBump,bumpScale:.00015});
+  // Keep the unfiltered artwork's sRGB colors independent of studio lighting
+  // and filmic tone mapping; the sleeve still supplies reflections and depth.
+  const frontMat=unlitArtwork
+    ? new THREE.MeshBasicMaterial({toneMapped:false})
+    : new THREE.MeshStandardMaterial({roughness:.84,metalness:0,bumpMap:plasticBump,bumpScale:.00015});
   mesh(new THREE.PlaneGeometry(2.39,3.505),frontMat,badge,0,-.30,.04);
   const backMat=new THREE.MeshStandardMaterial({color:'#eeeadf',roughness:.9});
   const back=mesh(new THREE.PlaneGeometry(2.39,3.505),backMat,badge,0,-.30,.009); back.rotation.y=Math.PI;
@@ -218,7 +223,7 @@ export async function createBadgeScene(canvas, getSettings, onState) {
     texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=renderer.capabilities.getMaxAnisotropy();
     frontMat.map?.dispose(); frontMat.map=texture;frontMat.needsUpdate=true;
   }
-  try {await setCard(CARD_URL);} catch(error){renderer.dispose();world.free();throw error;}
+  try {await setCard(cardUrl);} catch(error){renderer.dispose();world.free();throw error;}
   function coordinates(e){const rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);}
   function hit(){return raycaster.intersectObject(paper,false)[0];}
   function pointerdown(e){
