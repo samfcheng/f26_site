@@ -15,7 +15,7 @@ export const projects = [
       "role": "Design Intern",
       "team": "PM, Engineering Team, & one other designer",
       "skills": "Design, UI/UX, Prototyping",
-      "context": "Multiply is a fintech startup offering financial employee benefits to more than 4.8 million employees. As the first design intern, I worked across the company, including tools for loan officers managing the mortgage process.",
+      "context": "Multiply helps employers offer financial benefits, with mortgages at the center of the product during my internship. Borrowers discover Multiply through their employer, apply for a mortgage, and work with our internal loan officers to complete their loan. As the first design intern, I focused on making that process easier for the people helping them through it.",
       "goal": "Make getting a mortgage smoother for both the person applying and the loan officer helping them through the process.",
       "alt": "Multiply’s loan officer dashboard, with a morning briefing of actionable tasks.",
       "heroImages": [

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import Metatags from '$lib/components/Metatags.svelte';
   import Footer from '$lib/components/Footer.svelte';
+  import MultiplyStudy from '$lib/components/MultiplyStudy.svelte';
 
   let { data } = $props();
   const project = $derived(data.project);
@@ -93,6 +94,9 @@
     </figure>
   </section>
 
+  {#if project.slug === 'multiply'}
+    <MultiplyStudy />
+  {:else}
   <section class="upcoming" aria-label="Full case study coming soon">
     <div class="reading-column blurred-preview" aria-hidden="true" inert>
       <h2><span class="section-number">01<span class="rule"></span></span>The problem</h2>
@@ -116,6 +120,7 @@
       </div>
     </div>
   </section>
+  {/if}
 </main>
 
 <Footer />
@@ -191,5 +196,9 @@
     .left,.laptop .left{right:calc(50% + 120px)}.right,.laptop .right{left:calc(50% + 120px)}
     .metadata{grid-template-columns:1fr;gap:20px}.context{padding-top:64px}
     .rule{width:32px}
+  }
+  @media(max-width:360px){
+    h2{font-size:38px}
+    nav{font-size:12px}
   }
 </style>

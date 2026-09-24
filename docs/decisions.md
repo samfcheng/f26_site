@@ -1,5 +1,14 @@
 # Decisions
 
+## Multiply’s first case study draft
+
+Multiply has a dedicated story component so its long-form draft can evolve without
+adding unfinished content to Classmate or Olos. Shared figure rendering supplies
+intrinsic image sizes, lazy loading, full-size links, and explicit placeholders.
+The 4× outcome is contact volume, separate from the ~95% 24-hour contact rate;
+the comparison periods are stated rather than implying a controlled experiment.
+See `multiply-draft-notes.md` for source mapping and unresolved editorial details.
+
 Things that look odd until you know why. If you are about to "simplify" one of
 these, read the entry first — most were tried the obvious way and it didn't hold.
 
