@@ -12,12 +12,20 @@ export const projects = [
     ],
     "caseStudy": {
       "color": "#dedcff",
+      "sections": [
+        { "id": "context", "number": "00", "label": "Context" },
+        { "id": "command-center", "number": "01", "label": "Command center" },
+        { "id": "crm", "number": "02", "label": "CRM" },
+        { "id": "emails", "number": "03", "label": "Emails" },
+        { "id": "reflections", "number": "04", "label": "Reflections" }
+      ],
       "role": "Design Intern",
       "team": "PM, Engineering Team, & one other designer",
       "skills": "Design, UI/UX, Prototyping",
       "context": "Multiply helps employers offer financial benefits, with mortgages at the center of the product during my internship. Borrowers discover Multiply through their employer, apply for a mortgage, and work with our internal loan officers to complete their loan. As the first design intern, I focused on making that process easier for the people helping them through it.",
       "goal": "Make getting a mortgage smoother for both the person applying and the loan officer helping them through the process.",
       "alt": "Multiply’s loan officer dashboard, with a morning briefing of actionable tasks.",
+      "contextImage": "/work/multiply/case-study/dashboard-cover.webp",
       "heroImages": [
         "/work/multiply/multiply_cover.webp",
         "/work/multiply/multiply_screenshot_1.webp"
@@ -37,6 +45,7 @@ export const projects = [
     ],
     "caseStudy": {
       "color": "#fff791",
+      "selection": "#fff8b8",
       "role": "Founder",
       "team": "Just me",
       "skills": "Brand, Design, Development",
@@ -61,6 +70,7 @@ export const projects = [
     ],
     "caseStudy": {
       "color": "#dce7ff",
+      "selection": "#c9d9ff",
       "role": "Founding Designer",
       "team": "Two other co-founders (sales/business)",
       "skills": "Brand, Design, Development",

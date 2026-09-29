@@ -3,10 +3,19 @@
   import Metatags from '$lib/components/Metatags.svelte';
   import Footer from '$lib/components/Footer.svelte';
   import MultiplyStudy from '$lib/components/MultiplyStudy.svelte';
+  import CaseStudyFigure from '$lib/components/CaseStudyFigure.svelte';
+  import CaseStudyTimeline from '$lib/components/CaseStudyTimeline.svelte';
 
   let { data } = $props();
   const project = $derived(data.project);
   const study = $derived(project.caseStudy);
+  // Text selection takes on the project's brand colour while on its page.
+  $effect(() => {
+    if (!study.selection) return;
+    document.documentElement.style.setProperty('--selection', study.selection);
+    return () => document.documentElement.style.removeProperty('--selection');
+  });
+  const websiteLabel = $derived(project.website && new URL(project.website).hostname.replace(/^www\./, ''));
   let navOffscreen = $state(false);
   let navContainer;
   let navigation;
@@ -15,6 +24,8 @@
 
   onMount(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Phones show one static image cropped by the hero, so no parallax there.
+    const phone = window.matchMedia('(max-width: 600px)');
     let frame;
     const navExitDistance = navigation.offsetHeight + 22;
     const update = () => {
@@ -26,18 +37,22 @@
         : Math.min(scroll * (reducedMotion.matches ? 1 : 0.65), navExitDistance + 8);
       navContainer.style.transform = `translate3d(-50%, ${-navOffset}px, 0)`;
       navOffscreen = navOffset >= navExitDistance;
-      const offset = reducedMotion.matches ? 0 : Math.min(scroll, 600);
-      leftImage.style.transform = `translate3d(0, ${offset * 0.18}px, 0)`;
-      rightImage.style.transform = `translate3d(0, ${offset * 0.26}px, 0)`;
+      const offset = reducedMotion.matches || phone.matches ? 0 : Math.min(scroll, 600);
+      // Both hero images drift at the same rate.
+      const drift = `translate3d(0, ${offset * 0.22}px, 0)`;
+      leftImage.style.transform = drift;
+      rightImage.style.transform = drift;
     };
     const schedule = () => { if (frame === undefined) frame = requestAnimationFrame(update); };
     window.addEventListener('scroll', schedule, { passive: true });
     reducedMotion.addEventListener('change', schedule);
+    phone.addEventListener('change', schedule);
     navigation.addEventListener('focusout', schedule);
     update();
     return () => {
       window.removeEventListener('scroll', schedule);
       reducedMotion.removeEventListener('change', schedule);
+      phone.removeEventListener('change', schedule);
       navigation.removeEventListener('focusout', schedule);
       if (frame !== undefined) cancelAnimationFrame(frame);
     };
@@ -69,14 +84,20 @@
         <p class="date">{project.date}</p>
         {#if project.website}
           <a class="visit" href={project.website} target="_blank" rel="noopener noreferrer" aria-label="Visit {project.name} website (opens in a new tab)">
-            <span class="visit-label">Visit</span>
+            <span class="visit-label">{websiteLabel}</span>
+            <svg class="visit-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </a>
         {/if}
       </div>
     </div>
   </header>
 
-  <section class="context reading-column" aria-labelledby="context-title">
+  <div class="study">
+  {#if study.sections}
+    <aside class="rail"><div class="rail-inner"><CaseStudyTimeline sections={study.sections} /></div></aside>
+    <div class="pill"><CaseStudyTimeline sections={study.sections} variant="pill" /></div>
+  {/if}
+  <section class="context reading-column" id="context" aria-labelledby="context-title">
     <h2 id="context-title"><span class="section-number" aria-hidden="true">00<span class="rule"></span></span>Context</h2>
     <dl class="metadata">
       <div><dt>Role</dt><dd>{study.role}</dd></div>
@@ -89,10 +110,10 @@
       <h3>Goal</h3>
       <p>{study.goal}</p>
     </div>
-    <figure>
-      <img src={project.images[0]} alt={study.alt} />
-    </figure>
   </section>
+  <div class="context-visual">
+    <CaseStudyFigure src={study.contextImage ?? project.images[0]} alt={study.alt} background={study.color} eager />
+  </div>
 
   {#if project.slug === 'multiply'}
     <MultiplyStudy />
@@ -121,12 +142,14 @@
     </div>
   </section>
   {/if}
+  </div>
 </main>
 
 <Footer />
 
 <style>
-  main{background:#fafafa;font-weight:400}
+  /* Body copy sits a step lighter than headings so they stand out. */
+  main{background:#fafafa;font-weight:400;--body-text:#5b5864}
   .hero{height:520px;background:var(--project-color);position:relative;overflow:hidden;isolation:isolate}
   .nav-island{position:fixed;z-index:20;top:22px;left:50%;transform:translateX(-50%);width:550px;max-width:calc(100% - 40px)}
   nav{position:relative;width:100%;min-height:40px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;border-radius:999px;background:#000;color:#fff;font-size:16px}
@@ -134,16 +157,18 @@
   nav .back{display:inline-flex;align-items:center;gap:4px}
   .back svg{display:block;flex:none;width:1em;height:1em}
   nav a,.visit-label{transition:opacity 0.2s ease}
+  .visit-arrow{flex:none;margin-right:-2px;transition:transform 0.25s cubic-bezier(.22,1,.36,1),opacity 0.2s ease}
   nav a:focus-visible{outline-color:white;outline-offset:0;border-radius:4px}
   .socials{display:flex;gap:6px}
-  .hero-title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none}
+  .hero-title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none}
   h1{font-size:72px;line-height:1.05;letter-spacing:-.035em;font-weight:400}
   .hero-details{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;max-width:100%;padding-inline:20px}
   .date,.visit{font-size:16px;font-weight:400;border-radius:999px;padding:10px 18px;line-height:1.2;white-space:nowrap}
   .date{background:#fff}
-  .visit{display:inline-flex;align-items:center;background:#000;color:#fff;pointer-events:auto;text-decoration:none}
+  .visit{display:inline-flex;align-items:center;gap:6px;background:#000;color:#fff;pointer-events:auto;text-decoration:none}
   @media(hover:hover) and (pointer:fine){
-    nav a:hover,.visit:hover .visit-label{opacity:.8}
+    nav a:hover,.visit:hover .visit-label,.visit:hover .visit-arrow{opacity:.8}
+    .visit:hover .visit-arrow{transform:rotate(-45deg)}
   }
   .hero-art img{position:absolute;top:112px;width:650px;max-width:none;border-radius:12px;box-shadow:0 10px 40px #00000012}
   .left{right:calc(50% + 310px)}
@@ -153,16 +178,25 @@
   .laptop .right{left:calc(50% + 210px)}
   .reading-column{width:560px;max-width:calc(100% - 64px);margin-inline:auto}
   .context{padding-top:100px}
+  /* The timeline rail starts level with the 00 heading, 48px past the right
+     edge of the 1000px image column, and sticks near the top of the viewport.
+     Where there isn't room for it, a pill at the bottom of the screen stands in. */
+  .study{position:relative}
+  .rail{display:none;position:absolute;top:100px;bottom:0;left:calc(50% + 500px + 48px);width:168px}
+  .rail-inner{position:sticky;top:48px}
+  @media(min-width:1480px){
+    .rail{display:block}
+    .pill{display:none}
+  }
   h2{position:relative;font-weight:400;font-size:48px;line-height:1.2;letter-spacing:-.025em}
   .section-number{position:absolute;right:calc(100% + 16px);display:flex;align-items:center;gap:16px;white-space:nowrap}
   .rule{width:64px;height:1px;background:currentColor}
   .metadata{display:grid;grid-template-columns:1fr 1.5fr 1.4fr;gap:28px;margin:48px 0 28px;font-size:16px;line-height:1.45}
   dt,h3{font-size:16px;font-weight:500;margin:0 0 8px}
-  dd{margin:0}
-  .copy p,.blurred-preview p{font-size:16px;font-weight:400;line-height:1.45}
+  dd{margin:0;color:var(--body-text)}
+  .copy p,.blurred-preview p{font-size:16px;font-weight:400;line-height:1.45;color:var(--body-text)}
   .copy h3:not(:first-child){margin-top:24px}
-  figure{margin:54px 0 0;background:var(--project-color)}
-  figure img{display:block;width:100%;height:auto}
+  .context-visual{width:1000px;max-width:calc(100% - 64px);margin:54px auto 0}
   .upcoming{position:relative;isolation:isolate;overflow:hidden;margin-top:56px;height:310px}
   .blurred-preview{position:relative;user-select:none;pointer-events:none}
   .blurred-preview p{margin-top:24px}
@@ -192,9 +226,17 @@
   }
   @media(max-width:600px){
     nav{font-size:14px;padding-inline:8px}.socials{gap:0}
-    .hero-art img{top:220px}.laptop .hero-art img{top:180px}
-    .left,.laptop .left{right:calc(50% + 120px)}.right,.laptop .right{left:calc(50% + 120px)}
+    /* One image, centred below the title, with its top showing and the rest
+       running off the bottom of the hero. */
+    .hero-art{opacity:1}
+    .hero-title{justify-content:flex-start;padding-top:128px}
+    .right{display:none}
+    .hero-art img{top:318px;width:300px;border-radius:8px}
+    .left{right:auto;left:calc(50% - 150px)}
+    .laptop .hero-art img{top:292px;width:440px}
+    .laptop .left{right:auto;left:calc(50% - 220px)}
     .metadata{grid-template-columns:1fr;gap:20px}.context{padding-top:64px}
+    .context-visual{max-width:calc(100% - 32px);margin-top:40px}
     .rule{width:32px}
   }
   @media(max-width:360px){
