@@ -1,33 +1,13 @@
 <script>
   import { onMount } from 'svelte';
-  import { page } from '$app/state';
+  import { sway } from '$lib/sway.js';
   let mobile = $state(true);
-  let mobileBadge;
-  // Renders of the 3D badge in its sleeve, without the strap and clip.
-  const badgeImage = $derived(page.url.searchParams.has('filter') ? '/assets/badge-mobile-filter.webp' : '/assets/badge-mobile.webp');
   onMount(() => {
     const breakpoint = matchMedia('(max-width: 700px)');
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-    let frame;
-    const update = () => {
-      frame = undefined;
-      if (mobileBadge) {
-        const progress = Math.min(Math.max(scrollY, 0) / innerHeight, 1);
-        mobileBadge.style.transform = `rotate(${reduced.matches ? 7 : 7 - progress * 12}deg)`;
-      }
-    };
-    const scroll = () => { if (frame === undefined) frame = requestAnimationFrame(update); };
-    const resize = () => { mobile = breakpoint.matches; scroll(); };
+    const resize = () => { mobile = breakpoint.matches; };
     resize();
     breakpoint.addEventListener('change', resize);
-    reduced.addEventListener('change', scroll);
-    window.addEventListener('scroll', scroll, { passive: true });
-    return () => {
-      breakpoint.removeEventListener('change', resize);
-      reduced.removeEventListener('change', scroll);
-      window.removeEventListener('scroll', scroll);
-      if (frame !== undefined) cancelAnimationFrame(frame);
-    };
+    return () => breakpoint.removeEventListener('change', resize);
   });
   import Footer from '$lib/components/Footer.svelte';
   import Badge from '$lib/components/Badge.svelte';
@@ -37,7 +17,7 @@
   let aboutOpen = $state(false);
 </script>
 
-<Metatags description="I design products and the stories behind them. Currently studying Arts, Technology, & Business at USC." />
+<Metatags description="I design products and the stories behind them. Currently studying Arts, Technology, & Business at USC." video="https://www.samfcheng.com/og.mp4" />
 <a class="skip" href="#work">Skip to work</a>
 <main>
   <section class="hero" aria-label="Introduction">
@@ -45,8 +25,14 @@
     <p class="education">Currently studying Arts,<br />Technology, &amp; Business @ USC</p>
     <h1><span>Sam</span> <span>Cheng</span></h1>
     {#if mobile}
-      <div class="mobile-badge">
-        <img bind:this={mobileBadge} src={badgeImage} alt="Sam Cheng badge in a clear sleeve" width="995" height="1666" fetchpriority="high" />
+      <!-- On phones the badge hangs from the top edge on its strap, as if worn.
+           It carries the name, so the copy below it stays quiet. -->
+      <div class="lanyard">
+        <img use:sway={{ stiffness: 30, scroll: .12, tap: 14 }} src="/assets/badge-lanyard.webp" alt="Sam Cheng’s badge on a lanyard" width="900" height="1997" fetchpriority="high" />
+      </div>
+      <div class="lanyard-copy">
+        <p class="lead">I design products and the stories behind them.</p>
+        <p class="meta">Currently studying Arts, Technology, &amp; Business @ USC. <button type="button" class="more" aria-haspopup="dialog" onclick={() => aboutOpen = true}>[more]</button></p>
       </div>
     {:else}
       <Badge />
@@ -66,16 +52,18 @@
   .more:hover{color:#080808}
   .more:focus-visible{outline:2px solid #7950ef;outline-offset:3px;border-radius:2px}.education{right:var(--page-gutter);text-align:right}
   h1{position:absolute;left:-2.3vw;bottom:3vw;font-size:19.9vw;line-height:1;letter-spacing:-.02em;white-space:nowrap}
-  .mobile-badge{display:none}
+  .lanyard,.lanyard-copy{display:none}
   @media(max-width:700px){
-    .hero{height:100svh;min-height:700px}
-    .intro,.education{font-size:1rem;line-height:1.25}
-    .intro{top:44px;left:32px}
-    .education{top:108px;right:32px}
-    h1{z-index:3;left:50%;right:auto;bottom:28px;width:max-content;transform:translateX(-50%);text-align:left;font-size:32vw;line-height:.88;letter-spacing:-.035em;white-space:normal;pointer-events:none}
-    h1 span{display:block}
-    .mobile-badge{display:flex;position:absolute;z-index:2;inset:174px 20px calc(56.32vw + 28px);align-items:center;justify-content:center;pointer-events:none}
-    /* The render's shadow falls below the sleeve, so nudge it down to sit visually centred. */
-    .mobile-badge img{display:block;width:84%;height:100%;object-fit:contain;transform:rotate(7deg);translate:0 5%}
+    /* The badge shows the name, so the heading and the desktop copy step
+       aside; the heading stays for screen readers. */
+    .hero{display:flex;flex-direction:column;justify-content:flex-end;height:100svh;min-height:640px;padding:0 24px max(36px,env(safe-area-inset-bottom))}
+    .intro,.education{display:none}
+    h1{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+    .lanyard{display:block;position:absolute;top:0;left:50%;width:min(80vw,340px);translate:-50% 0}
+    /* Swings from the top edge, where the strap leaves the screen. */
+    .lanyard img{display:block;width:100%;height:auto;transform-origin:50% 0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+    .lanyard-copy{display:block;position:relative;z-index:2}
+    .lead{font-size:28px;line-height:1.12;letter-spacing:-.03em;text-wrap:balance;margin-bottom:12px}
+    .meta{font-size:16px;line-height:1.3;letter-spacing:-.02em;color:#77747f}
   }
 </style>

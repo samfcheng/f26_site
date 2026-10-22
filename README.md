@@ -36,7 +36,24 @@ keyboard focus and reduced-motion alternatives.
 
 The largest download remains Rapier's embedded WASM (about 1.1 MB gzip including
 badge code). Further size reduction would require a different physics build or
-simpler simulation. Mobile-specific layout is intentionally deferred.
+simpler simulation.
+
+## Mobile
+
+At 700 px and below the homepage has its own layout; desktop is unchanged. Phones
+never load three.js or Rapier. The hero is a render of the badge on its lanyard
+(`static/assets/badge-lanyard.webp`), hanging from the top edge; it sways on a
+damped spring when the page scrolls or the badge is tapped (`src/lib/sway.js`),
+and only animates while moving. Each project shows all three previews in a
+scroll-snapping strip, then its copy and a case-study link. About opens as a
+bottom sheet that can be dragged or flicked down to close.
+
+## Share preview
+
+`static/og.mp4` is a 4-second loop of the share card's badges sliding across,
+each swinging slightly, used as the homepage's `og:video`; `card.png` stays as
+the image everywhere a video doesn't play. It is rendered with Remotion from
+the sibling `f26_og_video` project (`npm run render`).
 
 Original project imagery remains in `static/work` for future case studies.
 
