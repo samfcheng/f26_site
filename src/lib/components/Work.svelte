@@ -33,6 +33,12 @@
     return () => { cancelled = true;clearTimeout(timer);observer.disconnect();animateLabels?.dispose(); };
   });
   function enter(index) { if (matchMedia('(hover: hover) and (pointer: fine)').matches) hovered = index; }
+  /** On phones, which image each project's strip is snapped to. */
+  let slides = $state(projects.map(() => 0));
+  function snapped(event, index) {
+    const strip = event.currentTarget;
+    slides[index] = Math.round(strip.scrollLeft / (strip.firstElementChild.offsetWidth + 8));
+  }
 </script>
 
 <section id="work" aria-label="Selected work" bind:this={section} class:has-active={active !== null} class:plotter-ready={ready} class:no-filter={noFilter}>
@@ -55,6 +61,28 @@
       </div>
     </a>
   {/each}
+  <!-- Phones: no hover, so every project shows all three previews in a
+       swipeable row, with its copy and a link underneath. -->
+  {#each projects as project, index}
+    <article class="entry" aria-labelledby="{project.slug}-title">
+      <header>
+        <h2 id="{project.slug}-title"><a href="/work/{project.slug}">{project.name}</a></h2>
+        <p class="date">{project.date}</p>
+      </header>
+      <div class="strip" onscroll={event => snapped(event, index)}>
+        {#each project.images as image, imageIndex}
+          <a class="slide" href="/work/{project.slug}" tabindex="-1" aria-hidden={imageIndex > 0}>
+            <img src={image} alt={imageIndex === 0 ? `${project.name} preview` : ''} width="890" height="676" loading="lazy" decoding="async" />
+          </a>
+        {/each}
+      </div>
+      <div class="dots" aria-hidden="true">
+        {#each project.images as _, imageIndex}<span class:on={slides[index] === imageIndex}></span>{/each}
+      </div>
+      <p class="description">{project.description}</p>
+      <a class="read" href="/work/{project.slug}">Read case study <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg></a>
+    </article>
+  {/each}
 </section>
 
 <style>
@@ -76,16 +104,25 @@
   .active .preview{opacity:1}.active .preview-0{transform:translateY(0) rotate(-8deg)}.active .preview-1{transform:translateY(0) rotate(10deg);transition-delay:35ms}.active .preview-2{transform:translateY(0) rotate(-7.2deg);transition-delay:70ms}
   .project:focus-visible{outline-offset:-5px}.project:focus-visible .preview{transition:none}
   @media(prefers-reduced-motion:reduce){.preview{transition:opacity 160ms ease;transform:none!important}.active .preview{transition-delay:0ms}}
+  .entry{display:none}
   @media(max-width:700px){
-    section{padding:48px 0 56px}
-    .project{display:block;min-height:0;padding:32px 24px}
-    .label{width:100%}
-    h2{font-size:32px;margin-bottom:12px}
-    .previews{position:relative;inset:auto;height:auto;margin-top:24px;transform:none;z-index:auto}
-    .preview{display:none;position:static;width:100%;height:auto;object-fit:contain;opacity:1;transform:none!important;transition:none}
-    .preview-0{display:block}
-    .muted .copy,.plotter-ready .muted .copy{opacity:1}
-    .no-filter .muted .copy{filter:none}
-    .label canvas{display:none}
+    section{padding:24px 0 40px}
+    .project{display:none}
+    .entry{display:block;padding:40px 0 44px;border-top:1px solid #eaeaea}
+    .entry:last-child{border-bottom:1px solid #eaeaea}
+    header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:0 24px;margin-bottom:20px}
+    h2{font-size:32px;margin-bottom:0}
+    .date{white-space:nowrap}
+    .strip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:24px;padding:0 24px;overscroll-behavior-x:contain;scrollbar-width:none}
+    .strip::-webkit-scrollbar{display:none}
+    .slide{flex:0 0 calc(100% - 56px);scroll-snap-align:start;-webkit-tap-highlight-color:transparent}
+    .slide img{display:block;width:100%;height:auto;aspect-ratio:890/676;object-fit:cover;background:#fff;background-clip:padding-box;border:1px solid rgb(0 0 0 / .1);border-radius:4px}
+    .dots{display:flex;gap:6px;padding:14px 24px 0}
+    .dots span{width:6px;height:6px;border-radius:999px;background:#080808;opacity:.15;transition:opacity 200ms ease,width 250ms var(--ease-out)}
+    .dots .on{width:16px;opacity:.8}
+    .description{padding:0 24px;margin-top:20px;line-height:1.38}
+    .read{display:inline-flex;align-items:center;gap:6px;margin:16px 24px 0;padding:8px 14px 9px;border-radius:999px;background:#080808;color:#fff;font-size:15px;letter-spacing:-.01em;transition:transform 160ms var(--ease-out)}
+    .read:active{transform:scale(.97)}
   }
+  @media(max-width:700px) and (prefers-reduced-motion:reduce){.dots span{transition:none}}
 </style>
