@@ -4,7 +4,7 @@
   import { boardSpots, cardSize, edgeSides, samePose } from './pinboard-layout.js';
   import { explorations, categories } from './explorations.js';
 
-  // Pin spritesheets come from /prototypes/pin-render: 16 frames in a 4×4
+  // Pre-rendered pin spritesheets contain 16 frames in a 4×4
   // grid, frame 0 pushed into the board and frame 15 pulled out. Each frame
   // is 120px around the hole the needle goes into.
   const FRAMES = 16, COLUMNS = 4, LIFTED = FRAMES - 1;
@@ -215,7 +215,7 @@
   }
   function clicked(index) {
     if (dragged) { dragged = false; return; }
-    if (explorations[index].src) open(index);
+    open(index);
   }
   function nudge(event, index) {
     const step = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] }[event.key];
@@ -503,7 +503,7 @@
       <span class="intro">Lately I've been exploring</span>
       {#each categories as category, index}
         <!-- Hover previews; clicking locks the category until toggled or cleared. -->
-        <button type="button" class="category" class:on={active === category.id} class:off={active !== null && active !== category.id}
+        <button type="button" class="category" class:off={active !== null && active !== category.id}
           aria-pressed={locked === category.id}
           onpointerenter={event => { if (locked === null && event.pointerType === 'mouse' && matchMedia('(hover: hover) and (pointer: fine)').matches) focus(category.id); }}
           onpointerleave={event => { if (event.pointerType === 'mouse') leave(); }}
@@ -513,7 +513,7 @@
     </p>
   </div>
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions (Escape does the same from the keyboard) -->
-  <ul class="board" class:focused={active !== null} style:--board-height="{boardHeight}px" bind:this={board} onclick={event => { if (event.target === board) clearFocus(); }}>
+  <ul class="board" style:--board-height="{boardHeight}px" bind:this={board} onclick={event => { if (event.target === board) clearFocus(); }}>
     {#each explorations as item, index}
       {@const spot = spots[index]}
       {@const pose = poses[index]}
@@ -524,13 +524,9 @@
         style:transform="translate({pose.x}px, {pose.y}px) rotate({pose.angle}deg) scale({pose.scale * lifting(index)})"
         onpointerdown={event => down(event, index)} onpointermove={event => move(event, index)}
         onpointerup={() => up(index)} onpointercancel={() => up(index)}>
-        <button type="button" class="media" class:placeholder={!item.src} aria-label={item.src ? `View ${item.title}` : 'Placeholder'}
+        <button type="button" class="media" aria-label={`View ${item.title}`}
           style:box-shadow={shadow(frames[index])} onclick={() => clicked(index)} onkeydown={event => nudge(event, index)} style:aspect-ratio="{item.width} / {item.height}">
-          {#if item.src}
-            <video src={item.src} poster={item.poster} autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
-          {:else}
-            <span>Placeholder</span>
-          {/if}
+          <video src={item.src} poster={item.poster} autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
         </button>
         <span class="pin" style:transform="translateY({pinClearance[index] ? -20 * frames[index] / LIFTED : 0}px)" style:--pin-lift={frames[index] / LIFTED} aria-hidden="true" style:background-image="url(/explorations/pins/{pinColor[item.category]}.webp)" style:background-position={sprite(frames[index])}></span>
       </li>
@@ -583,8 +579,6 @@
   .viewing .media{visibility:hidden}
   .media:focus-visible{outline:2px solid #7950ef;outline-offset:3px}
   video{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
-  .placeholder{display:grid;place-items:center;cursor:grab;background:repeating-linear-gradient(135deg,#f4f3f6 0 10px,#efeef2 10px 20px)}
-  .placeholder span{font-size:12px;letter-spacing:.02em;color:#a9a6b0}
   /* The sprite's centre is the hole the needle goes into. */
   .pin{position:absolute;left:50%;top:16px;width:120px;height:120px;margin:-60px 0 0 -60px;background-size:400% 400%;background-repeat:no-repeat;pointer-events:none;cursor:grab}
   /* The 120px sprite includes empty space and shadow. Only the plastic pin

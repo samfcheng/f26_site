@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { boardSpots, edgeSides, samePose } from '../src/routes/prototypes/explorations/pinboard-layout.js';
+import { boardSpots, edgeSides, samePose } from '../src/lib/explorations/pinboard-layout.js';
 
 test('board grows beyond eleven cards and supports removing every card', () => {
   const items = Array.from({ length: 25 }, () => ({}));

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { freezeAnimations, captureCardState } from '../src/routes/prototypes/explorations/pinboard-motion.js';
+import { freezeAnimations, captureCardState } from '../src/lib/explorations/pinboard-motion.js';
 
 test('interrupted animations hold the displayed pose after cancellation and before the return flight', t => {
   const displayed = { transform: 'matrix(0.8, 0, 0, 0.8, 60, 20)', boxShadow: '0px 20px 40px black' };

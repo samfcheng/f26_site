@@ -187,3 +187,16 @@ sidebar list so only visible rows mount — same win, no staleness, no build ste
   load and used by nothing. Only weights 400 and 500 appear in any component.
 - `getComputedStyle` in the deck's scroll handler, now read once per reflow.
 - Thumbnail blur: 36 painting `backdrop-filter` layers → 21.
+
+
+## Explorations promoted to the homepage
+
+The finalized pinboard lives under `src/lib/explorations/` and renders after Work.
+Its composed positions, interruptible springs, category ordering, pin clearance,
+and immediate lightbox return are preserved. Preview and full-size videos are
+both intentional: the board uses the smaller loops while the lightbox loads the
+larger versions. Only assets referenced by the finalized collection are kept.
+
+Removed all `/prototypes` routes, including the desk study and pin renderer.
+The renderer can be recovered from the pre-cleanup snapshot, `880db28`, on
+`dev/finalize-explorations` if new pin sprites are needed.

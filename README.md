@@ -12,7 +12,7 @@ npm run build
 npm test
 ```
 
-- `src/routes/+page.svelte`: hero and footer layout.
+- `src/routes/+page.svelte`: hero, work, explorations, and footer layout.
 - `src/lib/components/Work.svelte`: hover/focus project previews.
 - `src/lib/projects.js`: original project descriptions, dates, and preview images.
 - `src/routes/work/[slug]`: prerendered case-study placeholders.
@@ -67,15 +67,20 @@ lift from 0.95 scale, and 250 ms image motion with 35 ms stagger. Images have
 white backgrounds and 1 px borders at 10% black. There is no individual-image
 hover scaling. The prototype route was removed after promoting these settings.
 
-## Desk work-page study
+## Explorations
 
-`/prototypes/work-desk` is an isolated, single-scene prototype based on the desk
-sketch: an aluminum monitor, notepad and pen, and coffee on a cool gray desk.
-It shares the badge's plotter shader and default settings. The monitor texture
-contains the project bento layout, with projected HTML links for keyboard access
-and case-study navigation. A damped perspective camera responds to mouse movement. A four-corner CSS
-projection keeps links aligned with the tilted screen. Rendering stops when
-settled, offscreen, or in a hidden tab, and reuses static shadow maps. The Work
-marquee uses CSS; reduced motion disables the marquee and camera movement.
-The section has no surrounding header, footer, or visible controls. Geometry, textures,
-shadow maps, render targets, and observers are released on navigation.
+The homepage's Explorations section lives in `src/lib/explorations/`, below
+selected work. Its category buttons preview on hover and lock on click; cards
+retain their size and left-to-right order when gathered. Opening a card scatters
+its neighbours and plays the full-size loop in a lightbox. Phones use a filtered
+two-column grid; reduced motion emphasizes categories without rearranging cards.
+
+Add work in `src/lib/explorations/explorations.js`. Each entry needs a category,
+title, dimensions, preview video (`src`), full-size video (`full`), and poster.
+An optional `spot` sets the resting composition; entries without it auto-pack.
+Keep the corresponding media in `static/explorations/`. The four pin spritesheets
+are pre-rendered assets, so the pinboard does not load Three.js.
+
+Prototype routes and render tools were removed when the section was promoted.
+The pre-cleanup version is preserved in commit `880db28` on
+`dev/finalize-explorations`.

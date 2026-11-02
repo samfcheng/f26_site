@@ -12,6 +12,7 @@
   import Footer from '$lib/components/Footer.svelte';
   import Badge from '$lib/components/Badge.svelte';
   import Work from '$lib/components/Work.svelte';
+  import Explorations from '$lib/explorations/Explorations.svelte';
   import Metatags from '$lib/components/Metatags.svelte';
   import About from '$lib/components/About.svelte';
   let aboutOpen = $state(false);
@@ -39,11 +40,13 @@
     {/if}
   </section>
   <Work />
+  <Explorations />
 </main>
-<Footer />
+<div class="footer"><Footer /></div>
 <About bind:open={aboutOpen} />
 
 <style>
+  .footer :global(footer){background:#fafafa}
   .skip{position:fixed;top:16px;left:16px;z-index:10;padding:12px;background:white;transform:translateY(-200%)}.skip:focus{transform:none}
   .hero{position:relative;width:100%;height:100vh;background:#fff;overflow:hidden}
   .intro,.education{position:absolute;top:100px;font-size:1rem;line-height:1.25;letter-spacing:-.02em;z-index:3;pointer-events:none}
