@@ -2,7 +2,7 @@
   import { page } from '$app/state';
   import { badgeSettings } from '$lib/badge/settings.js';
   const noFilter = $derived(!page.url.searchParams.has('filter'));
-  const badgeImage = $derived(noFilter ? '/assets/badge_nofilter.png' : '/assets/badge2.png');
+  const badgeImage = '/assets/badge-artwork.png';
   // Captures of the scene's first frame, before physics runs. Cropped to the
   // same box so one set of positioning rules covers both.
   const stillImage = $derived(noFilter ? '/assets/badge-still.webp' : '/assets/badge-still-filter.webp');
@@ -18,6 +18,9 @@
   let ready = $state(false);
   $effect(() => {
     const cardUrl = badgeImage;
+    // Both modes use one artwork; recreate the scene when the material/filter
+    // settings change, since the artwork material is chosen at construction.
+    const sceneSettings = settings;
     let cancelled = false, scene, idle, frame;
     ready = false;
     // Wait for the rest of the page before pulling in three.js, Rapier, and
@@ -25,7 +28,7 @@
     const start = () => {
       idle = (window.requestIdleCallback ?? (fn => setTimeout(fn, 1)))(() => {
         import('$lib/badge/badge-scene.js')
-          .then(({ createBadgeScene }) => cancelled ? null : createBadgeScene(canvas, () => settings, value => { if (!cancelled) status = value; }, cardUrl))
+          .then(({ createBadgeScene }) => cancelled ? null : createBadgeScene(canvas, () => sceneSettings, value => { if (!cancelled) status = value; }, cardUrl))
           .then(value => {
             if (cancelled) return value?.dispose();
             scene = value;

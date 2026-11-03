@@ -56,7 +56,7 @@
       </div>
       <div class="previews" aria-hidden="true">
         {#each project.images as image, imageIndex}
-          <img src={image} alt="" width="890" height="676" class="preview preview-{imageIndex}" />
+          <img src={image} alt="" width="890" height="676" class="preview preview-{imageIndex}" loading="lazy" decoding="async" />
         {/each}
       </div>
     </a>

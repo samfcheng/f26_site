@@ -19,7 +19,7 @@
   .social-pill{display:inline-block;padding:1px 9px 2px;border-radius:999px;color:#fff;pointer-events:none;transform-origin:center;transition:transform 180ms var(--ease-out),opacity 180ms ease}
   .linkedin{background:#1400ff}.twitter{background:#000}.instagram{background:#ec3293}.email{background:#f3742b}
   .social:focus-visible{outline-offset:3px}
-  @media(hover:hover) and (pointer:fine){.social:hover .social-pill{transform:scale(.95) rotate(-2deg);opacity:.85}}
+  @media(hover:hover) and (pointer:fine){.social:hover .social-pill{transform:scale(.95) rotate(-1deg);opacity:.85}}
   @media(prefers-reduced-motion:reduce){.social-pill{transition:opacity 180ms ease}.social:hover .social-pill{transform:none}}
   @media(max-width:600px){
     footer{padding:56px 24px 64px;gap:32px}

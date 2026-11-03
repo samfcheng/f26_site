@@ -7,7 +7,7 @@ import { createRibbon } from './ribbon.js';
 import { createHardware } from './hardware.js';
 import { createSceneFilters } from './scene-filters.js';
 
-const CARD_URL = '/assets/badge2.png';
+const CARD_URL = '/assets/badge-artwork.png';
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 
 function roundedShape(w, h, r) {

@@ -12,12 +12,12 @@ npm run build
 npm test
 ```
 
-- `src/routes/+page.svelte`: hero and footer layout.
+- `src/routes/+page.svelte`: hero, work, explorations, and footer layout.
 - `src/lib/components/Work.svelte`: hover/focus project previews.
 - `src/lib/projects.js`: original project descriptions, dates, and preview images.
 - `src/routes/work/[slug]`: prerendered case-study placeholders.
 - `src/lib/badge/settings.js`: original badge defaults with plotter enabled.
-- `static/assets/badge2.png`: printed badge artwork.
+- `static/assets/badge-artwork.png`: printed badge artwork.
 
 ## Rendering
 
@@ -52,8 +52,19 @@ bottom sheet that can be dragged or flicked down to close.
 
 `static/og.mp4` is a 4-second loop of the share card's badges sliding across,
 each swinging slightly, used as the homepage's `og:video`; `card.png` stays as
-the image everywhere a video doesn't play. It is rendered with Remotion from
-the sibling `f26_og_video` project (`npm run render`).
+the image everywhere a video doesn't play. All badge assets share the same artwork, `static/assets/badge-artwork.png`.
+Regenerate the desktop loading stills (normal and filtered), mobile lanyard,
+share image, and share video with:
+
+```sh
+node scripts/render-badge-assets.mjs
+```
+
+This uses the installed Remotion toolchain in the sibling `f26_og_video` project
+(or `REMOTION_ROOT`), its cached macOS ARM Chrome Headless Shell, FFmpeg, and
+Python/Pillow. The rendering source is kept in `scripts/badge-assets/`; it uses
+the site's actual Three.js badge scene and preserves the four-second conveyor
+animation. Generated assets keep their existing dimensions and transparency.
 
 Original project imagery remains in `static/work` for future case studies.
 
@@ -67,15 +78,20 @@ lift from 0.95 scale, and 250 ms image motion with 35 ms stagger. Images have
 white backgrounds and 1 px borders at 10% black. There is no individual-image
 hover scaling. The prototype route was removed after promoting these settings.
 
-## Desk work-page study
+## Explorations
 
-`/prototypes/work-desk` is an isolated, single-scene prototype based on the desk
-sketch: an aluminum monitor, notepad and pen, and coffee on a cool gray desk.
-It shares the badge's plotter shader and default settings. The monitor texture
-contains the project bento layout, with projected HTML links for keyboard access
-and case-study navigation. A damped perspective camera responds to mouse movement. A four-corner CSS
-projection keeps links aligned with the tilted screen. Rendering stops when
-settled, offscreen, or in a hidden tab, and reuses static shadow maps. The Work
-marquee uses CSS; reduced motion disables the marquee and camera movement.
-The section has no surrounding header, footer, or visible controls. Geometry, textures,
-shadow maps, render targets, and observers are released on navigation.
+The homepage's Explorations section lives in `src/lib/explorations/`, below
+selected work. Its category buttons preview on hover and lock on click; cards
+retain their size and left-to-right order when gathered. Opening a card scatters
+its neighbours and plays the full-size loop in a lightbox. Phones use a filtered
+two-column grid; reduced motion emphasizes categories without rearranging cards.
+
+Add work in `src/lib/explorations/explorations.js`. Each entry needs a category,
+title, dimensions, preview video (`src`), full-size video (`full`), and poster.
+An optional `spot` sets the resting composition; entries without it auto-pack.
+Keep the corresponding media in `static/explorations/`. The four pin spritesheets
+are pre-rendered assets, so the pinboard does not load Three.js.
+
+Prototype routes and render tools were removed when the section was promoted.
+The pre-cleanup version is preserved in commit `880db28` on
+`dev/finalize-explorations`.

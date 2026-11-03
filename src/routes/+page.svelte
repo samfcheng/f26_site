@@ -12,12 +12,18 @@
   import Footer from '$lib/components/Footer.svelte';
   import Badge from '$lib/components/Badge.svelte';
   import Work from '$lib/components/Work.svelte';
+  import Explorations from '$lib/explorations/Explorations.svelte';
   import Metatags from '$lib/components/Metatags.svelte';
   import About from '$lib/components/About.svelte';
   let aboutOpen = $state(false);
 </script>
 
-<Metatags description="I design products and the stories behind them. Currently studying Arts, Technology, & Business at USC." video="https://www.samfcheng.com/og.mp4" />
+<Metatags description="I design products and the stories behind them. Currently studying Arts, Technology, & Business at USC." video="https://www.samfcheng.com/og.mp4?v=2" />
+<svelte:head>
+  <!-- The server can't tell which badge a screen needs, and the desktop one only
+       renders after hydration. Start it now, at the same breakpoint. -->
+  <link rel="preload" as="image" href="/assets/badge-still.webp" media="(min-width: 701px)" fetchpriority="high" />
+</svelte:head>
 <a class="skip" href="#work">Skip to work</a>
 <main>
   <section class="hero" aria-label="Introduction">
@@ -26,9 +32,14 @@
     <h1><span>Sam</span> <span>Cheng</span></h1>
     {#if mobile}
       <!-- On phones the badge hangs from the top edge on its strap, as if worn.
-           It carries the name, so the copy below it stays quiet. -->
+           It carries the name, so the copy below it stays quiet.
+           The server renders this branch for every screen, so the blank source
+           stops desktops downloading a badge they replace on hydration. -->
       <div class="lanyard">
-        <img use:sway={{ stiffness: 30, scroll: .12, tap: 14 }} src="/assets/badge-lanyard.webp" alt="Sam Cheng’s badge on a lanyard" width="900" height="1997" fetchpriority="high" />
+        <picture>
+          <source media="(min-width: 701px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" />
+          <img use:sway={{ stiffness: 30, scroll: .12, tap: 14 }} src="/assets/badge-lanyard.webp" alt="Sam Cheng’s badge on a lanyard" width="900" height="1997" fetchpriority="high" />
+        </picture>
       </div>
       <div class="lanyard-copy">
         <p class="lead">I design products and the stories behind them.</p>
@@ -39,11 +50,13 @@
     {/if}
   </section>
   <Work />
+  <Explorations />
 </main>
-<Footer />
+<div class="footer"><Footer /></div>
 <About bind:open={aboutOpen} />
 
 <style>
+  .footer :global(footer){background:#fafafa}
   .skip{position:fixed;top:16px;left:16px;z-index:10;padding:12px;background:white;transform:translateY(-200%)}.skip:focus{transform:none}
   .hero{position:relative;width:100%;height:100vh;background:#fff;overflow:hidden}
   .intro,.education{position:absolute;top:100px;font-size:1rem;line-height:1.25;letter-spacing:-.02em;z-index:3;pointer-events:none}
@@ -67,6 +80,7 @@
     .lanyard{display:block;flex:1 1 0;min-height:0;align-self:center;width:min(80vw,340px);margin-bottom:8px}
     /* Pinned to the top edge, where the strap leaves the screen, and swings
        from there. */
+    .lanyard picture{display:contents}
     .lanyard img{display:block;width:100%;height:100%;object-fit:contain;object-position:50% 0;transform-origin:50% 0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
     .lanyard-copy{display:block;position:relative;z-index:2}
     .lead{font-size:28px;line-height:1.12;letter-spacing:-.03em;text-wrap:balance;margin-bottom:12px}
