@@ -200,3 +200,27 @@ larger versions. Only assets referenced by the finalized collection are kept.
 Removed all `/prototypes` routes, including the desk study and pin renderer.
 The renderer can be recovered from the pre-cleanup snapshot, `880db28`, on
 `dev/finalize-explorations` if new pin sprites are needed.
+
+
+## One badge artwork source
+
+`static/assets/badge-artwork.png` is the supplied v2 artwork, used by both live
+rendering modes and the asset renderer. Regenerate static fallbacks as well as
+share media whenever it changes, so the loading image cannot show an older
+design before the interactive scene appears. Unused mobile variants and old
+artwork exports were removed. Share image/video URLs include a version query
+to give crawlers a fresh asset URL for the new design.
+
+
+## Homepage load order
+
+The badge comes first, then the work, and the explorations only as they near
+the screen. The board used to request all its media on load, which also held up
+the `load` event that the 3D badge waits for, so its cards now mount their
+poster and video within 600px of the viewport and pause beyond that.
+
+The page server-renders its phone branch for every screen, so the lanyard sits
+in a `<picture>` whose desktop source is a blank GIF, and the desktop still has
+its own media-scoped preload. Without that, desktops download the 700 KB lanyard
+and never show it. The preload names the default still, so `?filter` also
+fetches the filtered one.

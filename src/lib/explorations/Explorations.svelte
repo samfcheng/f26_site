@@ -18,6 +18,18 @@
   // movement that has to read as being picked up and set down.
   const EASE_IN_OUT = 'cubic-bezier(.77,0,.175,1)';
   const easeInOut = t => t < .5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+  // easeOutSine: moves from the first frame and slows evenly, so the pin never
+  // reads as stopping partway. The stronger --ease-out spends itself too early.
+  const EASE_OUT_SINE = 'cubic-bezier(.39,.575,.565,1)';
+  // Opening a card: the pause while its pin comes out, then the flight.
+  const OPEN_LIFT = 200, OPEN_FLIGHT = 520, CLOSE_FLIGHT = 460;
+  // How far the pin sits above the card once out, so the viewer doesn't cover
+  // it. Opening, it rises PIN_DRIFT on its own, enough to clear the viewer by
+  // take-off, plus PIN_CARRY on the viewer's curve so the two move as one.
+  const PIN_CLEARANCE = 20, PIN_DRIFT = 50, PIN_CARRY = 18;
+  // The needle comes out evenly across take-off when opening. Its usual quick
+  // pull would add a burst of speed of its own ahead of the viewer's.
+  const OPEN_PULL = 460;
 
   const spots = boardSpots(explorations);
   const boardHeight = Math.max(540, ...spots.map((spot, index) => spot.y + cardSize(explorations[index]).height + 24));
@@ -37,6 +49,25 @@
   let viewing = $state(null);
   let shown = $state(false);
   let fullReady = $state(false);
+  // Nothing on a card is requested until it comes near the screen, so the board
+  // never competes with the badge and the work, or holds up the page's load
+  // event, which the 3D badge waits for.
+  let near = $state(explorations.map(() => false));
+  let posterReady = $state(explorations.map(() => false));
+  let videoReady = $state(explorations.map(() => false));
+  $effect(() => {
+    const observer = new IntersectionObserver(entries => {
+      for (const { target, isIntersecting } of entries) {
+        if (isIntersecting) near[cards.indexOf(target)] = true;
+        // Loops stop decoding once they are well off screen.
+        const video = target.querySelector('video');
+        if (isIntersecting) video?.play().catch(() => {});
+        else video?.pause();
+      }
+    }, { rootMargin: '600px 0px' });
+    cards.forEach(card => observer.observe(card));
+    return () => observer.disconnect();
+  });
 
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const mobile = () => matchMedia('(max-width: 700px)').matches;
@@ -49,17 +80,18 @@
   // Pin frames tween in JS rather than CSS steps() so a lift can reverse
   // from wherever it is. Pulling out is a little slower than pushing in.
   const pinTimers = explorations.map(() => ({ to: 0 }));
-  function setPin(index, to, delay = 0) {
+  function setPin(index, to, delay = 0, evenOver = null) {
     const timer = pinTimers[index];
     clearTimeout(timer.wait); cancelAnimationFrame(timer.frame);
     timer.to = to;
     if (reduced()) { timer.to = 0; frames[index] = 0; pinClearance[index] = false; return; }
     timer.wait = setTimeout(() => {
       const from = frames[index], start = performance.now();
-      const duration = reduced() ? 0 : (to > from ? 240 : 170) * Math.abs(to - from) / LIFTED;
+      const duration = reduced() ? 0 : (evenOver ?? (to > from ? 240 : 170)) * Math.abs(to - from) / LIFTED;
+      const ease = evenOver === null ? easeInOut : t => t;
       const step = now => {
         const t = duration ? Math.min(1, (now - start) / duration) : 1;
-        frames[index] = Math.round(from + (to - from) * easeInOut(t));
+        frames[index] = Math.round(from + (to - from) * ease(t));
         if (t < 1) timer.frame = requestAnimationFrame(step);
         else if (to === 0) pinClearance[index] = false;
       };
@@ -354,8 +386,22 @@
   // Lightbox. Three beats: the pin comes out and the card lifts slightly off
   // the board; then it is carried to the middle of the screen, straightening
   // as it comes, while the board blurs behind it; closing reverses that and
-  // the pin goes back in once the card lands, on top of the pile.
+  // the pin goes back in once the card lands, on top of the pile. The pin
+  // rises in one unbroken move across the first two beats.
   let restore = [];
+  /** Move a pin from wherever it is showing. Holds until `settlePin`. */
+  function movePin(index, y, duration, easing) {
+    const pin = cards[index].querySelector('.pin');
+    const from = getComputedStyle(pin).transform;
+    pin.getAnimations().forEach(animation => animation.cancel());
+    // Persisted because browsers drop a finished animation once a later one
+    // covers the same property, even when that one adds to it, as PIN_CARRY does.
+    pin.animate([{ transform: from }, { transform: `translateY(${y}px)` }], { duration, easing, fill: 'forwards' }).persist();
+  }
+  /** Hand a pin back to its frame-driven position. */
+  function settlePin(index) {
+    cards[index].querySelector('.pin').getAnimations().forEach(animation => animation.cancel());
+  }
   function others(index) {
     if (mobile()) return;
     const layout = measure();
@@ -412,9 +458,10 @@
     const motion = !reduced();
     if (motion) {
       pinClearance[index] = true;
-      setPin(index, LIFTED);
+      setPin(index, LIFTED, 0, OPEN_PULL);
+      movePin(index, -PIN_DRIFT, OPEN_LIFT + OPEN_FLIGHT, EASE_OUT_SINE);
       others(index);
-      await wait(200);
+      await wait(OPEN_LIFT);
     }
     fullReady = false;
     shown = true;
@@ -435,7 +482,9 @@
     });
     if (!motion) return;
     viewer.animate([{ transform: cardTransform(index), boxShadow: SMALL }, { transform: 'none', boxShadow: LARGE }],
-      { duration: 520, easing: EASE_IN_OUT, fill: 'backwards' });
+      { duration: OPEN_FLIGHT, easing: EASE_IN_OUT, fill: 'backwards' });
+    cards[index].querySelector('.pin').animate([{ transform: 'translateY(0)' }, { transform: `translateY(${-PIN_CARRY}px)` }],
+      { duration: OPEN_FLIGHT, easing: EASE_IN_OUT, fill: 'forwards', composite: 'add' });
     // The backdrop holds off a beat so the board's own movement reads first.
     backdrop.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 440, delay: 140, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'backwards' });
     closeButton.animate([{ opacity: 0, transform: 'scale(.95)' }, { opacity: 1, transform: 'none' }], { duration: 200, delay: 420, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'backwards' });
@@ -457,8 +506,11 @@
       // The open card is still pinned last after its return flight.
       closeButton.animate([{ opacity: currentButton.opacity }, { opacity: 0 }], { duration: 120, fill: 'forwards' });
       backdrop.animate([{ opacity: currentBackdrop.opacity }, { opacity: 0 }], { duration: 520, easing: EASE_IN_OUT, fill: 'forwards' });
+      // The pin comes back down with the card, ready to go in as it lands.
+      movePin(index, -PIN_CLEARANCE, CLOSE_FLIGHT, EASE_IN_OUT);
       await viewer.animate([currentViewer, { transform: cardTransform(index), boxShadow: SMALL }],
-        { duration: 460, easing: EASE_IN_OUT, fill: 'forwards' }).finished;
+        { duration: CLOSE_FLIGHT, easing: EASE_IN_OUT, fill: 'forwards' }).finished;
+      settlePin(index);
     }
     dialog.close();
     shown = false;
@@ -524,11 +576,16 @@
         style:transform="translate({pose.x}px, {pose.y}px) rotate({pose.angle}deg) scale({pose.scale * lifting(index)})"
         onpointerdown={event => down(event, index)} onpointermove={event => move(event, index)}
         onpointerup={() => up(index)} onpointercancel={() => up(index)}>
-        <button type="button" class="media" aria-label={`View ${item.title}`}
+        <button type="button" class="media" class:loading={near[index] && !posterReady[index]} aria-label={`View ${item.title}`}
           style:box-shadow={shadow(frames[index])} onclick={() => clicked(index)} onkeydown={event => nudge(event, index)} style:aspect-ratio="{item.width} / {item.height}">
-          <video src={item.src} poster={item.poster} autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          {#if near[index]}
+            <img class="poster" class:ready={posterReady[index]} src={item.poster} alt="" decoding="async"
+              onload={() => { posterReady[index] = true; }} onerror={() => { posterReady[index] = true; }} />
+            <video class:ready={videoReady[index]} src={item.src} autoplay muted loop playsinline aria-hidden="true"
+              onplaying={() => { videoReady[index] = true; }}></video>
+          {/if}
         </button>
-        <span class="pin" style:transform="translateY({pinClearance[index] ? -20 * frames[index] / LIFTED : 0}px)" style:--pin-lift={frames[index] / LIFTED} aria-hidden="true" style:background-image="url(/explorations/pins/{pinColor[item.category]}.webp)" style:background-position={sprite(frames[index])}></span>
+        <span class="pin" style:transform="translateY({pinClearance[index] ? -PIN_CLEARANCE * frames[index] / LIFTED : 0}px)" style:--pin-lift={frames[index] / LIFTED} aria-hidden="true" style:background-image={near[index] ? `url(/explorations/pins/${pinColor[item.category]}.webp)` : undefined} style:background-position={sprite(frames[index])}></span>
       </li>
     {/each}
   </ul>
@@ -540,7 +597,8 @@
   <div class="backdrop" bind:this={backdrop}></div>
   {#if shown && viewing !== null}
     {@const item = explorations[viewing]}
-    <div class="viewer" bind:this={viewer} style:aspect-ratio="{item.width} / {item.height}" style:--ratio={item.width / item.height}>
+    <!-- The poster shows through if the card's video hadn't started when it was opened. -->
+    <div class="viewer" bind:this={viewer} style:aspect-ratio="{item.width} / {item.height}" style:--ratio={item.width / item.height} style:background-image="url({item.poster})">
       <canvas bind:this={still} aria-hidden="true"></canvas>
       <video bind:this={full} class:ready={fullReady} src={item.full} autoplay muted loop playsinline onplaying={() => { fullReady = true; }}></video>
     </div>
@@ -574,7 +632,15 @@
   /* Washed toward the white board rather than made see-through, so cards
      that overlap at the edges don't show through each other. */
   .card.aside{filter:saturate(.3) contrast(.25) brightness(1.75) blur(1px)}
-  .media{display:block;width:100%;padding:0;border:0;border-radius:3px;overflow:hidden;background:#f1f0f3;cursor:pointer}
+  .media{position:relative;display:block;width:100%;padding:0;border:0;border-radius:3px;overflow:hidden;background:#f1f0f3;cursor:pointer}
+  /* Loading: a soft pulse that holds off a beat, so a quick load never shows
+     it. The poster then fades in, and the video over it once it is playing. */
+  .media.loading::before{content:'';position:absolute;inset:0;background:#e4e3e8;opacity:0;animation:card-pulse 900ms ease-in-out 240ms infinite alternate}
+  @keyframes card-pulse{to{opacity:1}}
+  .media .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+  .media video{position:relative}
+  .media .poster,.media video{opacity:0;transition:opacity 240ms ease}
+  .media .poster.ready,.media video.ready{opacity:1}
   .held .media,.held .pin{cursor:grabbing}
   .viewing .media{visibility:hidden}
   .media:focus-visible{outline:2px solid #7950ef;outline-offset:3px}
@@ -591,7 +657,7 @@
   /* Frosted rather than opaque, so the board stays as context. */
   .backdrop{position:absolute;inset:0;background:rgb(255 255 255 / .5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
   /* Fits the screen whichever way round the work is. */
-  .viewer{position:relative;width:min(88vw,calc(84vh * var(--ratio)),1200px);border-radius:6px;overflow:hidden;background:#f1f0f3;box-shadow:0 40px 90px -30px rgb(0 0 0 / .35)}
+  .viewer{position:relative;width:min(88vw,calc(84vh * var(--ratio)),1200px);border-radius:6px;overflow:hidden;background:#f1f0f3 center/cover no-repeat;box-shadow:0 40px 90px -30px rgb(0 0 0 / .35)}
   .viewer canvas,.viewer video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .viewer video{opacity:0;transition:opacity 200ms ease}
   .viewer video.ready{opacity:1}
@@ -599,15 +665,15 @@
   .close:active{transform:scale(.94)}
 
   @media(max-width:1100px){.board{height:var(--board-height);margin-top:20px}.card{width:220px}.card.portrait{width:140px}.card.square{width:160px}}
-  @media(prefers-reduced-motion:reduce){.media{transition:none}}
-  /* Phones: a two-column stack. No dragging so it never fights the page
-     scroll, and a category filters the stack instead of moving cards. */
+  @media(prefers-reduced-motion:reduce){.media{transition:none}.media.loading::before{animation:none}}
+  /* Columns preserve a small consistent gap at different aspect ratios,
+     without grid rows leaving extra empty space beneath shorter images. */
   @media(max-width:700px){
     section{padding:32px 24px 56px}
     h2{font-size:32px;margin-bottom:12px}
-    .board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 14px;height:auto;margin-top:36px}
-    .card,.card.portrait,.card.square{position:relative;left:auto!important;top:auto!important;width:auto;transform:none!important}
-    .card:nth-child(odd){margin-top:18px}
+    .board{display:block;columns:2;column-gap:14px;height:auto;margin-top:36px}
+    .card,.card.portrait,.card.square{position:relative;display:block;break-inside:avoid;left:auto!important;top:auto!important;width:100%;margin:0 0 14px;transform:none!important}
+    .media{border-radius:3px}
     .card.hidden{display:none}
     .viewer{border-radius:4px}
   }
