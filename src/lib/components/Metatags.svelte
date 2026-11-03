@@ -19,7 +19,7 @@
 	let {
 		title = 'Sam Cheng',
 		description = 'Sam Cheng is a designer & founder building impactful products with innovative design.',
-		image = 'https://www.samfcheng.com/card.png',
+		image = 'https://www.samfcheng.com/card.png?v=2',
 		video
 	} = $props();
 </script>

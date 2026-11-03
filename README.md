@@ -17,7 +17,7 @@ npm test
 - `src/lib/projects.js`: original project descriptions, dates, and preview images.
 - `src/routes/work/[slug]`: prerendered case-study placeholders.
 - `src/lib/badge/settings.js`: original badge defaults with plotter enabled.
-- `static/assets/badge2.png`: printed badge artwork.
+- `static/assets/badge-artwork.png`: printed badge artwork.
 
 ## Rendering
 
@@ -52,8 +52,19 @@ bottom sheet that can be dragged or flicked down to close.
 
 `static/og.mp4` is a 4-second loop of the share card's badges sliding across,
 each swinging slightly, used as the homepage's `og:video`; `card.png` stays as
-the image everywhere a video doesn't play. It is rendered with Remotion from
-the sibling `f26_og_video` project (`npm run render`).
+the image everywhere a video doesn't play. All badge assets share the same artwork, `static/assets/badge-artwork.png`.
+Regenerate the desktop loading stills (normal and filtered), mobile lanyard,
+share image, and share video with:
+
+```sh
+node scripts/render-badge-assets.mjs
+```
+
+This uses the installed Remotion toolchain in the sibling `f26_og_video` project
+(or `REMOTION_ROOT`), its cached macOS ARM Chrome Headless Shell, FFmpeg, and
+Python/Pillow. The rendering source is kept in `scripts/badge-assets/`; it uses
+the site's actual Three.js badge scene and preserves the four-second conveyor
+animation. Generated assets keep their existing dimensions and transparency.
 
 Original project imagery remains in `static/work` for future case studies.
 
